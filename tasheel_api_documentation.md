@@ -99,17 +99,47 @@ POST /checkout/summery
 ```
 **Response:**
 ```json
+
 {
   "message": "Cart summary",
   "cart": {
-    "eligible": true,
-    "downpayment": 50,
-    "installments": [
-      {"amount": 50, "due_date": "2025-12-01"},
-      {"amount": 50, "due_date": "2026-01-01"}
-    ]
+    "base_amount": 150.00,
+    "total_amount_without_vat": 150.00,
+    "total_amount_with_vat": 157.50,
+    "shortage": 0.00,
+    "per_installment": 50.00,
+    "down_payment_without_vat": 50.00,
+    "down_payment_with_vat": 52.50,
+    "remaining_after_down_payment": 105.00,
+    "per_installment_with_vat": 52.50,
+    "used_eligibility": 150.00,
+    "eligibility": 500.00,
+    "is_eligible": true,
+    "plan_html": "<div>Installment Plan HTML</div>",
+    "json_rates": {
+      "vat_rate": 5,
+      "pg_rate": 2,
+      "merchant_rate": 1,
+      "tasheel_profit_rate": 3
+    },
+    "customer_rate": 1.5,
+    "vat_rate": 5,
+    "pg_rate": 2,
+    "merchant_rate": 1,
+    "tasheel_profit_rate": 3,
+    "tasheel_price_without_vat": 150.00,
+    "tasheel_vat_amount": 7.50,
+    "monthly_installments": [
+      {"amount": 52.50, "due_date": "2025-12-01"},
+      {"amount": 52.50, "due_date": "2026-01-01"}
+    ],
+    "user_eligibility_data": {
+      "credit_score": 720,
+      "max_limit": 1000.00
+    }
   }
 }
+
 ```
 
 ### 6.2 Create Cart
