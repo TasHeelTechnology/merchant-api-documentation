@@ -1,0 +1,141 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Tasheel BNPL Merchant API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/createOauthClient": {
+      "post": {
+        "summary": "Create OAuth Client",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client created"
+          }
+        }
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "summary": "Issue Access Token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued"
+          }
+        }
+      }
+    },
+    "/checkout/summery": {
+      "post": {
+        "summary": "Get Cart Summary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Summary returned"
+          }
+        }
+      }
+    },
+    "/checkout/cart": {
+      "post": {
+        "summary": "Create Cart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cart created"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Cart",
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart details"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Cart",
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart deleted"
+          }
+        }
+      }
+    },
+    "/checkout/status": {
+      "get": {
+        "summary": "Get Status",
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status returned"
+          }
+        }
+      }
+    }
+  }
+}
