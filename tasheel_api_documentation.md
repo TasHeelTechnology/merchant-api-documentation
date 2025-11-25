@@ -236,7 +236,7 @@ Merchant sets `callback_url` in Create Cart request. Tasheel sends POST:
 ```json
 {
   "txnId": "TXN123456",
-  "status": "downpayment_paid"
+  "status": true
 }
 ```
 Merchant then calls Get Status API.
