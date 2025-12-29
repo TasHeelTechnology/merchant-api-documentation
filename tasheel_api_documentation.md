@@ -180,7 +180,6 @@ GET /checkout/status?cartId=UUID123
 ```
 **Response:**
 ```json
-
 {
   "message": "Cart status",
   "data": {
@@ -190,7 +189,7 @@ GET /checkout/status?cartId=UUID123
       "txn_id": "TXN123456",
       "created_at": "2025-11-25T10:30:00Z",
       "try": 1,
-      "status": "completed",
+      "status": "completed", // Status options: 1 => "completed", 2 => "pending", 3 => "cancel", default => "unknown".
       "note": "Downpayment received",
       "amount": 50.00,
       "final_amount": 50.00,
@@ -245,7 +244,6 @@ GET /checkout/status?cartId=UUID123
     }
   }
 }
-
 ```
 
 ### 6.4 Delete Cart
