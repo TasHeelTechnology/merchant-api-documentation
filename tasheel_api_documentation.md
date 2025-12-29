@@ -152,13 +152,13 @@ POST /checkout/cart
   "merchantId": "tasheel123",
   "customerPhone": "96891234567",
   "customerEmail": "customer@example.com",
-  "quotationType": "refundable",
+  "quotationType": "refundable", // Specifies the type of quotation. Use "refundable" if the quotation allows refunds, or "non-refundable" if refunds are not permitted.
   "cartItems": [
     {"productId": "FLIGHT001", "quantity": 1, "price": 150, "total": 150}
   ],
   "totalAmount": 150,
   "referenceCode": "tasheel123-ORD98765",
-  "cartValidity": "02:00",
+  "cartValidity": "02:00", // Maximum time the user can confirm and pay the downpayment. Minimum is "00:01" (1 minute) and maximum is "48:00" (2 days).
   "callback_url": "https://merchant.com/webhook"
 }
 ```
@@ -284,4 +284,20 @@ Merchant then calls Get Status API.
 - Versioning: `/`
 - Timeout: 30s
 - Retry: Exponential backoff for transient errors
+
+---
+
+### 10. Setting Redirect URL After Successful Payment
+
+To set the redirect URL after a successful payment, follow these steps:
+
+1. Navigate to the Merchant Dashboard.
+2. Locate the "Integration Settings" section.
+3. Set the "Redirect URL" field to the desired URL where customers will be redirected after a successful payment.
+
+Below is a screenshot from the Merchant Dashboard for reference:
+
+![Integration Settings Screenshot](integration.png)
+
+Ensure that the URL is accessible and properly handles the response from the payment gateway.
 
