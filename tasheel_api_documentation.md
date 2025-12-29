@@ -146,22 +146,38 @@ POST /checkout/summery
 ```
 POST /checkout/cart
 ```
-**Body:**
+**Body Parameters:**
+- `merchantId` (required): A string representing the merchant ID. Must exist in the `branch_staff` table.
+- `customerPhone` (required): A string representing the customer's phone number. Maximum length is 15 characters.
+- `customerEmail` (optional): A string representing the customer's email address. Must be a valid email format and have a maximum length of 255 characters.
+- `quotationType` (optional): A string specifying the type of quotation. Allowed values are `refundable` and `non_refundable`.
+- `cartItems` (required): An array of cart items. Each item must include:
+  - `productId` (required): A string representing the product ID.
+  - `quantity` (required): An integer representing the quantity. Minimum value is 1.
+  - `price` (required): A numeric value representing the price. Minimum value is 0.
+  - `total` (required): A numeric value representing the total price. Minimum value is 0.
+  - `description` (optional): A string describing the product. Maximum length is 255 characters.
+- `totalAmount` (required): A numeric value representing the total amount. Minimum value is 0.
+- `referenceCode` (optional): A string representing the reference code. Maximum length is 255 characters.
+- `cartValidity` (optional): A string representing the cart validity in `HH:mm` format.
+
+**Sample Request:**
 ```json
 {
   "merchantId": "tasheel123",
   "customerPhone": "96891234567",
   "customerEmail": "customer@example.com",
-  "quotationType": "refundable", // Specifies the type of quotation. Use "refundable" if the quotation allows refunds, or "non-refundable" if refunds are not permitted.
+  "quotationType": "refundable",
   "cartItems": [
     {"productId": "FLIGHT001", "quantity": 1, "price": 150, "total": 150}
   ],
   "totalAmount": 150,
   "referenceCode": "tasheel123-ORD98765",
-  "cartValidity": "02:00", // Maximum time the user can confirm and pay the downpayment. Minimum is "00:01" (1 minute) and maximum is "48:00" (2 days).
+  "cartValidity": "02:00",
   "callback_url": "https://merchant.com/webhook"
 }
 ```
+
 **Response:**
 ```json
 {
@@ -176,8 +192,13 @@ POST /checkout/cart
 
 ### 6.3 Get Status
 ```
-GET /checkout/status?cartId=UUID123
+GET /checkout/status
 ```
+**Body Parameters:**
+- `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
+- `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
+- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+
 **Response:**
 ```json
 {
@@ -248,8 +269,13 @@ GET /checkout/status?cartId=UUID123
 
 ### 6.4 Delete Cart
 ```
-DELETE /checkout/cart?cartId=UUID123
+DELETE /checkout/cart
 ```
+**Body Parameters:**
+- `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
+- `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
+- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+
 **Response:**
 ```json
 {
