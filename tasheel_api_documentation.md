@@ -167,17 +167,16 @@ POST /checkout/cart
   "merchantId": "tasheel123",
   "customerPhone": "96891234567",
   "customerEmail": "customer@example.com",
-  "quotationType": "refundable",
+  "quotationType": "refundable", // Specifies the type of quotation. Use "refundable" if the quotation allows refunds, or "non-refundable" if refunds are not permitted.
   "cartItems": [
     {"productId": "FLIGHT001", "quantity": 1, "price": 150, "total": 150}
   ],
   "totalAmount": 150,
   "referenceCode": "tasheel123-ORD98765",
-  "cartValidity": "02:00",
+  "cartValidity": "02:00", // Maximum time the user can confirm and pay the downpayment. Minimum is "00:01" (1 minute) and maximum is "48:00" (2 days).
   "callback_url": "https://merchant.com/webhook"
 }
 ```
-
 **Response:**
 ```json
 {
@@ -266,6 +265,12 @@ GET /checkout/status
   }
 }
 ```
+
+#### Status interpretation for payment.status
+- completed: Downpayment paid successfully
+- pending: Payment initialized but still pending
+- cancel: Payment rejected or declined
+- unknown: Treated as cancel
 
 ### 6.4 Delete Cart
 ```
