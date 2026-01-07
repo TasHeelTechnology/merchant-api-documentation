@@ -246,21 +246,9 @@ temp-user-access: <temp_token>
 
 ---
 
-## 5. Idempotency
+## 5. Endpoints
 
-Assisted checkout prevents replay through:
-
-* **Single-use OTP verification**
-* **Short-lived temp token**
-* **Cart ownership validation** (cart must belong to the authorized user)
-
-If a client retries confirm requests, the backend will create new payment sessions unless you additionally enforce idempotency on `cart_uuid` + `user_id` at your application layer.
-
----
-
-## 6. Endpoints
-
-### 6.1 List User’s Saved Cards
+### 5.1 List User’s Saved Cards
 
 ```
 GET /assisted/cards
@@ -321,7 +309,7 @@ Notes:
 
 ---
 
-### 6.2 Set Default Card
+### 5.2 Set Default Card
 
 ```
 POST /assisted/cards/{id}/make-default
@@ -385,7 +373,7 @@ Notes:
 
 ---
 
-### 6.3 Assisted Checkout Confirm
+### 5.3 Assisted Checkout Confirm
 
 This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
 
@@ -583,18 +571,7 @@ temp-user-access: <temp_token>
 
 ---
 
-## 7. Laravel Middleware Notes
-
-* `ValidateTempUserAccess` middleware:
-
-  * Requires header: `temp-user-access`
-  * Validates token exists and not expired
-  * Injects `temp_user_id` into request context (`$request->temp_user_id`)
-* All assisted card + checkout endpoints are protected by this middleware.
-
----
-
-## 8. Security Considerations
+## 6. Security Considerations
 
 * OTP explicitly confirms user consent before any card/payment actions.
 * Temp token is short-lived (10 minutes) and cannot be used after expiry.
@@ -603,12 +580,4 @@ temp-user-access: <temp_token>
 
 ---
 
-## 9. Versioning, Timeouts & Retries
-
-* Versioning: `/`
-* Token validity: 10 minutes
-* HTTP client timeout: 30s, connect timeout: 10s
-* Gateway errors are handled as failures and payment record is marked rejected where applicable.
-
----
 
