@@ -31,15 +31,6 @@ POST /merchant/temp-auth/request
 }
 ```
 
-**Processing Flow:**
-
-* Validates `merchant_uuid` exists
-* Validates user by `mobile`
-* Blocks assisted checkout if user has overdue installments
-* Creates a `MerchantTempAuth` session
-* Sends OTP via SMS
-* Applies short cooldown to prevent spamming
-
 **Response (example):**
 
 ```json
@@ -418,33 +409,19 @@ temp-user-access: <temp_token>
 }
 ```
 
-**Processing Flow:**
-
-* Validates temp token (and expiry)
-* Resolves user from token
-* Validates `cart_uuid` exists and belongs to that user
-* Validates cart is not expired
-* Validates the selected saved card belongs to the user
-* Calculates downpayment using `TasHeel_Algorithm(...)`
-* Creates a `TasHeelPayment` record (pending)
-* Calls Paymob saved card / intention logic
-* Returns a **checkout session** payload (`client_secret`, `checkout_url`, etc.)
-
 **Response**
 
 ```json
 {
   "success": true,
-  "message": "Assisted checkout initialized",
+  "message": "Payment successful",
   "data": {
     "payment_track": "YC3ANYBR5GVG",
-    "ompay_order_id": 1831184,
     "amount": 75,
     "currency": "OMR",
-    "client_secret": "omn_csk_test_...beeb4c",
-    "checkout_url": "https://oman.paymob.com/unifiedcheckout/?publicKey=...&clientSecret=...",
     "quotation_id": 118,
-    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605"
+    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
+    "transaction_id": "PMB-987654321"
   }
 }
 ```
