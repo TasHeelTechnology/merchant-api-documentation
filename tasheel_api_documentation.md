@@ -194,6 +194,17 @@ POST /checkout/cart
 }
 ```
 
+**Expected Error Response (422 - Invalid `cartValidity` format):**
+```json
+{
+  "error": {
+    "cartValidity": [
+      "The cart validity format is invalid."
+    ]
+  }
+}
+```
+
 ### 6.3 Get Status
 ```
 GET /checkout/status
