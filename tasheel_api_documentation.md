@@ -137,6 +137,11 @@ POST /checkout/summery
       "credit_score": 720,
       "max_limit": 1000.00
     }
+  },
+  "merchant_credit_utilisation": {
+    "eligible_limit": 10000,
+    "current_eligible": 10000,
+    "utilised": 0
   }
 }
 
