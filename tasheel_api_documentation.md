@@ -147,6 +147,15 @@ POST /checkout/summery
 
 ```
 
+**Expected Error Response (403 - User Overdue / Not Eligible):**
+```json
+{
+  "status": "error",
+  "code": "LOAN_NOT_ELIGIBLE_OVERDUE",
+  "message": "User is not eligible for a new loan due to overdue installments."
+}
+```
+
 ### 6.2 Create Cart
 ```
 POST /checkout/cart
