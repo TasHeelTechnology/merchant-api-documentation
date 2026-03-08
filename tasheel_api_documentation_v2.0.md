@@ -463,7 +463,32 @@ temp-user-access: <temp_token>
   }
 }
 ```
+---
+### Retry & Cooldown Behavior
 
+* Each user + quotation + card combination can attempt **payment only once**.
+
+* If a payment fails:
+  * The API enforces a **1-minute cooldown** before retrying with the same card.
+  * Only **one retry** is allowed per failed payment.
+
+* If a retry attempt is made **before the cooldown expires**, the API returns **HTTP 429**:
+
+```json
+{
+  "success": false,
+  "message": "Previous payment failed. Please wait 37 seconds before retrying with the same card.",
+  "retry_after_seconds": 37
+}
+```
+If the retry limit is already used, the API returns HTTP 429:
+
+```json
+{
+  "success": false,
+  "message": "Retry already used for this payment attempt with the selected card."
+}
+```
 ---
 ## Expected Error Responses
 
@@ -577,6 +602,16 @@ temp-user-access: <temp_token>
 
 ---
 
+**402 – Payment Failed**
+
+```json
+{
+  "success": false,
+  "message": "Payment failed. Please wait 1 minute before retrying with the same card. Only one retry is allowed."
+}
+```
+---
+
 **400 – Payment Gateway Not Available**
 
 ```json
@@ -596,18 +631,6 @@ temp-user-access: <temp_token>
   "message": "Payment gateway configuration error (Paymob keys missing)"
 }
 ```
-
----
-
-**400 – Payment Failed**
-
-```json
-{
-  "success": false,
-  "message": "Payment failed"
-}
-```
-
 ---
 
 **500 – Unexpected Processing Error**
