@@ -41,6 +41,34 @@ POST /merchant/temp-auth/request
 }
 ```
 
+### OTP Cooldown Behaviour
+
+To prevent OTP abuse and SMS flooding, the system enforces a cooldown period.
+
+* Only **one OTP can be generated within a 2-minute window**.
+* If another request is made during this cooldown period, the API **will not generate a new OTP**.
+* Instead, the API returns the **existing OTP session** along with the remaining wait time.
+
+The merchant should **reuse the returned `otp_id`** when calling the OTP verification endpoint.
+
+### Example Response During Cooldown
+```json
+{
+  "success": true,
+  "message": "OTP already sent. Please wait 101 seconds before requesting again.",
+  "otp_id": 688,
+  "expires_at": "2026-03-08T06:16:14.000000Z"
+}
+```
+
+---
+
+**Notes:**
+
+* A new OTP is not generated during cooldown.
+* The previously issued OTP remains valid until expires_at.
+* Merchants should proceed with /merchant/temp-auth/verify using the same otp_id.
+
 ---
 ## Expected Error Responses
 
@@ -73,17 +101,6 @@ Occurs when required fields are missing or invalid.
 {
   "success": false,
   "message": "User has overdue installments. Assisted checkout blocked."
-}
-```
-
----
-
-**429 – OTP Cooldown Active**
-
-```json
-{
-  "success": false,
-  "message": "OTP already sent. Please wait before requesting again."
 }
 ```
 
@@ -122,6 +139,14 @@ POST /merchant/temp-auth/verify
 * Ensures OTP is not already used and not expired
 * Marks OTP as consumed
 * Issues `temp_token` valid for **10 minutes**
+
+### OTP Verification Attempt Limit
+
+For security purposes, OTP verification attempts are restricted.
+
+* Maximum **2 incorrect OTP attempts** are allowed per OTP session.
+* If the limit is reached, the OTP session becomes invalid.
+* The merchant must request a **new OTP** using `/merchant/temp-auth/request`.
 
 **Response (example):**
 
@@ -169,12 +194,24 @@ POST /merchant/temp-auth/verify
 
 ---
 
-**400 – Invalid OTP Target**
+**400 – Wrong OTP**
 
 ```json
 {
   "success": false,
-  "message": "Invalid OTP target"
+  "message": "Wrong OTP entered.",
+  "remaining_attempts": 1
+}
+```
+
+---
+
+**429 – Too Many Wrong OTP Attempts**
+
+```json
+{
+  "success": false,
+  "message": "Too many wrong attempts. Please request a new OTP."
 }
 ```
 
@@ -240,27 +277,28 @@ temp-user-access: <temp_token>
 
 ## 4. Rate Limits
 
-* OTP request: throttled using cooldown per mobile (example: ~15 seconds)
-* OTP verify: limited by OTP manager rules and expiry
-* Assisted APIs (`/assisted/cards`, `/assisted/checkout/confirm`): naturally constrained by **10-minute token expiry**
+The assisted checkout flow applies the following restrictions.
+
+### OTP Request
+
+* Only **one OTP can be generated within a 2-minute cooldown period**.
+* If another request is made during the cooldown window, the API returns the **existing OTP session** instead of generating a new OTP.
+
+### OTP Verification
+
+* Each OTP session allows a maximum of **2 incorrect attempts**.
+* If the attempt limit is reached, the OTP session becomes invalid and a new OTP must be requested.
+
+### Temporary Access Token
+
+* After successful OTP verification, a **temporary access token** is issued.
+* The token remains valid for **10 minutes**.
 
 ---
 
-## 5. Idempotency
+## 5. Endpoints
 
-Assisted checkout prevents replay through:
-
-* **Single-use OTP verification**
-* **Short-lived temp token**
-* **Cart ownership validation** (cart must belong to the authorized user)
-
-If a client retries confirm requests, the backend will create new payment sessions unless you additionally enforce idempotency on `cart_uuid` + `user_id` at your application layer.
-
----
-
-## 6. Endpoints
-
-### 6.1 List User’s Saved Cards
+### 5.1 List User’s Saved Cards
 
 ```
 GET /assisted/cards
@@ -321,7 +359,7 @@ Notes:
 
 ---
 
-### 6.2 Set Default Card
+### 5.2 Set Default Card
 
 ```
 POST /assisted/cards/{id}/make-default
@@ -385,7 +423,7 @@ Notes:
 
 ---
 
-### 6.3 Assisted Checkout Confirm
+### 5.3 Assisted Checkout Confirm
 
 This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
 
@@ -583,18 +621,7 @@ temp-user-access: <temp_token>
 
 ---
 
-## 7. Laravel Middleware Notes
-
-* `ValidateTempUserAccess` middleware:
-
-  * Requires header: `temp-user-access`
-  * Validates token exists and not expired
-  * Injects `temp_user_id` into request context (`$request->temp_user_id`)
-* All assisted card + checkout endpoints are protected by this middleware.
-
----
-
-## 8. Security Considerations
+## 6. Security Considerations
 
 * OTP explicitly confirms user consent before any card/payment actions.
 * Temp token is short-lived (10 minutes) and cannot be used after expiry.
@@ -603,12 +630,4 @@ temp-user-access: <temp_token>
 
 ---
 
-## 9. Versioning, Timeouts & Retries
-
-* Versioning: `/`
-* Token validity: 10 minutes
-* HTTP client timeout: 30s, connect timeout: 10s
-* Gateway errors are handled as failures and payment record is marked rejected where applicable.
-
----
 
