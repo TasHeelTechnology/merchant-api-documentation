@@ -41,17 +41,18 @@ POST /merchant/temp-auth/request
 }
 ```
 
-### OTP Cooldown Behaviour
+#### OTP Cooldown Behaviour
 
 To prevent OTP abuse and SMS flooding, the system enforces a cooldown period.
 
-* Only **one OTP can be generated within a 2-minute window**.
-* If another request is made during this cooldown period, the API **will not generate a new OTP**.
-* Instead, the API returns the **existing OTP session** along with the remaining wait time.
+- Only **one OTP can be generated within a 2-minute window**.
+- If another request is made during this cooldown period, the API **will not generate a new OTP**.
+- Instead, the API returns the **existing OTP session**.
+- The **remaining wait time is provided inside the `message` field** of the response.
 
 The merchant should **reuse the returned `otp_id`** when calling the OTP verification endpoint.
 
-### Example Response During Cooldown
+#### Example Response During Cooldown
 ```json
 {
   "success": true,
@@ -250,16 +251,6 @@ For security purposes, OTP verification attempts are restricted.
 
 ---
 
-**400 – Incorrect OTP**
-
-```json
-{
-  "success": false,
-  "message": "Invalid OTP"
-}
-```
----
-
 ## 3. Base URL & Environment
 
 Example environments:
@@ -289,16 +280,31 @@ The assisted checkout flow applies the following restrictions.
 * Each OTP session allows a maximum of **2 incorrect attempts**.
 * If the attempt limit is reached, the OTP session becomes invalid and a new OTP must be requested.
 
-### Temporary Access Token
+---
 
-* After successful OTP verification, a **temporary access token** is issued.
-* The token remains valid for **10 minutes**.
+## 5. Temporary Access Token
+
+After successful OTP verification, the system issues a **temporary access token** used to authorize the assisted checkout request.
+
+### Token Behavior
+
+- A **temporary access token** is generated once the OTP is successfully verified.
+- The token must be included in subsequent assisted checkout requests using the request header:
+
+```
+temp-user-access: <temporary_token>
+```
+
+### Token Expiry
+
+- The temporary token remains valid for **10 minutes**.
+- After the expiration time, the token becomes invalid and the merchant must **restart the OTP authorization flow**.
 
 ---
 
-## 5. Endpoints
+## 6. Endpoints
 
-### 5.1 List User’s Saved Cards
+### 6.1 List User’s Saved Cards
 
 ```
 GET /assisted/cards
@@ -359,7 +365,7 @@ Notes:
 
 ---
 
-### 5.2 Set Default Card
+### 6.2 Set Default Card
 
 ```
 POST /assisted/cards/{id}/make-default
@@ -423,7 +429,7 @@ Notes:
 
 ---
 
-### 5.3 Assisted Checkout Confirm
+### 6.3 Assisted Checkout Confirm
 
 This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
 
@@ -644,7 +650,7 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ---
 
-## 6. Security Considerations
+## 7. Security Considerations
 
 * OTP explicitly confirms user consent before any card/payment actions.
 * Temp token is short-lived (10 minutes) and cannot be used after expiry.
