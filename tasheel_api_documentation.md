@@ -137,9 +137,23 @@ POST /checkout/summery
       "credit_score": 720,
       "max_limit": 1000.00
     }
+  },
+  "merchant_credit_utilisation": {
+    "eligible_limit": 10000,
+    "current_eligible": 10000,
+    "utilised": 0
   }
 }
 
+```
+
+**Expected Error Response (403 - User Overdue / Not Eligible):**
+```json
+{
+  "status": "error",
+  "code": "LOAN_NOT_ELIGIBLE_OVERDUE",
+  "message": "User is not eligible for a new loan due to overdue installments."
+}
 ```
 
 ### 6.2 Create Cart
@@ -186,6 +200,17 @@ POST /checkout/cart
   "otp_expire_at": "2025-11-25T12:10:00Z",
   "cart_expire_at": "2025-11-25T14:10:00Z",
   "redirect_url": "https://tasheelbnpl.com/pay/UUID123"
+}
+```
+
+**Expected Error Response (422 - Invalid `cartValidity` format):**
+```json
+{
+  "error": {
+    "cartValidity": [
+      "The cart validity format is invalid."
+    ]
+  }
 }
 ```
 

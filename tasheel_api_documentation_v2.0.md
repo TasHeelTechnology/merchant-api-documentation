@@ -53,6 +53,7 @@ To prevent OTP abuse and SMS flooding, the system enforces a cooldown period.
 The merchant should **reuse the returned `otp_id`** when calling the OTP verification endpoint.
 
 #### Example Response During Cooldown
+
 ```json
 {
   "success": true,
@@ -197,12 +198,13 @@ For security purposes, OTP verification attempts are restricted.
 
 **400 – Wrong OTP**
 
+
 ```json
 {
   "success": false,
   "message": "Wrong OTP entered.",
   "remaining_attempts": 1
-}
+
 ```
 
 ---
@@ -280,7 +282,11 @@ The assisted checkout flow applies the following restrictions.
 * Each OTP session allows a maximum of **2 incorrect attempts**.
 * If the attempt limit is reached, the OTP session becomes invalid and a new OTP must be requested.
 
----
+
+### OTP Request
+
+* Only **one OTP can be generated within a 2-minute cooldown period**.
+* If another request is made during the cooldown window, the API returns the **existing OTP session** instead of generating a new OTP.
 
 ## 5. Temporary Access Token
 
@@ -300,11 +306,12 @@ temp-user-access: <temporary_token>
 - The temporary token remains valid for **10 minutes**.
 - After the expiration time, the token becomes invalid and the merchant must **restart the OTP authorization flow**.
 
+
 ---
 
-## 6. Endpoints
+## 5. Endpoints
 
-### 6.1 List User’s Saved Cards
+### 5.1 List User’s Saved Cards
 
 ```
 GET /assisted/cards
@@ -365,7 +372,7 @@ Notes:
 
 ---
 
-### 6.2 Set Default Card
+### 5.2 Set Default Card
 
 ```
 POST /assisted/cards/{id}/make-default
@@ -429,7 +436,7 @@ Notes:
 
 ---
 
-### 6.3 Assisted Checkout Confirm
+### 5.3 Assisted Checkout Confirm
 
 This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
 
@@ -651,6 +658,7 @@ If the retry limit is already used, the API returns HTTP 429:
 ---
 
 ## 7. Security Considerations
+
 
 * OTP explicitly confirms user consent before any card/payment actions.
 * Temp token is short-lived (10 minutes) and cannot be used after expiry.
