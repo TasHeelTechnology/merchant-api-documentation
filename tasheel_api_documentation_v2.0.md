@@ -41,17 +41,19 @@ POST /merchant/temp-auth/request
 }
 ```
 
-### OTP Cooldown Behaviour
+#### OTP Cooldown Behaviour
 
 To prevent OTP abuse and SMS flooding, the system enforces a cooldown period.
 
-* Only **one OTP can be generated within a 2-minute window**.
-* If another request is made during this cooldown period, the API **will not generate a new OTP**.
-* Instead, the API returns the **existing OTP session** along with the remaining wait time.
+- Only **one OTP can be generated within a 2-minute window**.
+- If another request is made during this cooldown period, the API **will not generate a new OTP**.
+- Instead, the API returns the **existing OTP session**.
+- The **remaining wait time is provided inside the `message` field** of the response.
 
 The merchant should **reuse the returned `otp_id`** when calling the OTP verification endpoint.
 
-### Example Response During Cooldown
+#### Example Response During Cooldown
+
 ```json
 {
   "success": true,
@@ -196,12 +198,13 @@ For security purposes, OTP verification attempts are restricted.
 
 **400 – Wrong OTP**
 
+
 ```json
 {
   "success": false,
   "message": "Wrong OTP entered.",
   "remaining_attempts": 1
-}
+
 ```
 
 ---
@@ -250,16 +253,6 @@ For security purposes, OTP verification attempts are restricted.
 
 ---
 
-**400 – Incorrect OTP**
-
-```json
-{
-  "success": false,
-  "message": "Invalid OTP"
-}
-```
----
-
 ## 3. Base URL & Environment
 
 Example environments:
@@ -275,7 +268,7 @@ temp-user-access: <temp_token>
 
 ---
 
-## 4. Rate Limits
+## 4. Threshold
 
 The assisted checkout flow applies the following restrictions.
 
@@ -289,10 +282,30 @@ The assisted checkout flow applies the following restrictions.
 * Each OTP session allows a maximum of **2 incorrect attempts**.
 * If the attempt limit is reached, the OTP session becomes invalid and a new OTP must be requested.
 
-### Temporary Access Token
 
-* After successful OTP verification, a **temporary access token** is issued.
-* The token remains valid for **10 minutes**.
+### OTP Request
+
+* Only **one OTP can be generated within a 2-minute cooldown period**.
+* If another request is made during the cooldown window, the API returns the **existing OTP session** instead of generating a new OTP.
+
+## 5. Temporary Access Token
+
+After successful OTP verification, the system issues a **temporary access token** used to authorize the assisted checkout request.
+
+### Token Behavior
+
+- A **temporary access token** is generated once the OTP is successfully verified.
+- The token must be included in subsequent assisted checkout requests using the request header:
+
+```
+temp-user-access: <temporary_token>
+```
+
+### Token Expiry
+
+- The temporary token remains valid for **10 minutes**.
+- After the expiration time, the token becomes invalid and the merchant must **restart the OTP authorization flow**.
+
 
 ---
 
@@ -463,7 +476,35 @@ temp-user-access: <temp_token>
   }
 }
 ```
+---
+#### Assisted Checkout Confirm Retry & Cooldown 
 
+* Each user + quotation + card combination can attempt **payment only once**.
+
+* If a payment fails:
+  * The API enforces a **1-minute cooldown** before retrying with the same card.
+  * Only **one retry** is allowed per failed payment.
+* Attempt Limits: Payment attempts are tracked using the following scope:
+  ```json
+  user_id + quotation_id + card_id
+  ```
+* If a retry attempt is made **before the cooldown expires**, the API returns **HTTP 429**:
+
+```json
+{
+  "success": false,
+  "message": "Previous payment failed. Please wait 37 seconds before retrying with the same card.",
+  "retry_after_seconds": 37
+}
+```
+If the retry limit is already used, the API returns HTTP 429:
+
+```json
+{
+  "success": false,
+  "message": "Retry already used for this payment attempt with the selected card."
+}
+```
 ---
 ## Expected Error Responses
 
@@ -577,6 +618,16 @@ temp-user-access: <temp_token>
 
 ---
 
+**402 – Payment Failed**
+
+```json
+{
+  "success": false,
+  "message": "Payment failed. Please wait 1 minute before retrying with the same card. Only one retry is allowed."
+}
+```
+---
+
 **400 – Payment Gateway Not Available**
 
 ```json
@@ -596,18 +647,6 @@ temp-user-access: <temp_token>
   "message": "Payment gateway configuration error (Paymob keys missing)"
 }
 ```
-
----
-
-**400 – Payment Failed**
-
-```json
-{
-  "success": false,
-  "message": "Payment failed"
-}
-```
-
 ---
 
 **500 – Unexpected Processing Error**
@@ -621,7 +660,8 @@ temp-user-access: <temp_token>
 
 ---
 
-## 6. Security Considerations
+## 7. Security Considerations
+
 
 * OTP explicitly confirms user consent before any card/payment actions.
 * Temp token is short-lived (10 minutes) and cannot be used after expiry.
