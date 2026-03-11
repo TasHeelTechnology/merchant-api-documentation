@@ -266,7 +266,7 @@ temp-user-access: <temp_token>
 
 ---
 
-## 4. Rate Limits
+## 4. Threshold
 
 The assisted checkout flow applies the following restrictions.
 
@@ -470,14 +470,17 @@ temp-user-access: <temp_token>
 }
 ```
 ---
-### Retry & Cooldown Behavior
+#### Assisted Checkout Confirm Retry & Cooldown 
 
 * Each user + quotation + card combination can attempt **payment only once**.
 
 * If a payment fails:
   * The API enforces a **1-minute cooldown** before retrying with the same card.
   * Only **one retry** is allowed per failed payment.
-
+* Attempt Limits: Payment attempts are tracked using the following scope:
+  ```json
+  user_id + quotation_id + card_id
+  ```
 * If a retry attempt is made **before the cooldown expires**, the API returns **HTTP 429**:
 
 ```json
