@@ -381,7 +381,110 @@ Accept: application/json
 
 ### 11.3 Endpoints
 
-#### 11.3.1 Create Refund Request
+#### 11.3.1 Calculate Refund Summary
+
+- Method: `POST`
+- URL: `/api/refund/calculate-summary`
+
+Request body:
+
+```json
+{
+  "tasheel_order_uuid": "c5ea8070-5f67-4f7f-8fe0-3d95ff2d95e5",
+  "ticket_amount": 120.5,
+  "airline_refund_amount": 100,
+  "currency": "OMR",
+  "merchant_id": "123",
+  "callback_url": "https://merchant.example.com/refunds/callback"
+}
+```
+
+Validation rules:
+
+- `tasheel_order_uuid`: required, string, max length `36` (Payment Link UUID). The UUID must belong to the authenticated merchant.
+- `ticket_amount`: optional, numeric, min `0` (accepted but backend calculates the authoritative ticket amount from `tasheel_order_uuid`)
+- `airline_refund_amount`: required, numeric, min `0`, must be less than or equal to backend-calculated ticket amount
+- `currency`: required, string, max length `10`
+- `merchant_id`: required, string, max length `255`
+- `callback_url`: optional, valid URL, max length `1000`
+
+Success response (`200`):
+
+```json
+{
+  "remark": "refund_summary",
+  "status": "success",
+  "data": {
+    "summary": {
+      "inputs": {},
+      "derived": {},
+      "admin_guidance": {},
+      "difficulty": {
+        "flag": false,
+        "reason": null
+      }
+    }
+  }
+}
+```
+
+Error responses:
+
+- `422` validation error
+
+```json
+{
+  "remark": "validation_error",
+  "status": "error",
+  "message": {
+    "error": [
+      "The tasheel order uuid field is required."
+    ]
+  }
+}
+```
+
+- `404` tasheel order uuid not found
+
+```json
+{
+  "remark": "cart_not_found",
+  "status": "error",
+  "message": {
+    "error": [
+      "Payment cart not found for this tasheel order uuid"
+    ]
+  }
+}
+```
+
+- `403` unauthorized access to tasheel order uuid
+
+```json
+{
+  "remark": "merchant_unauthorized",
+  "status": "error",
+  "message": {
+    "error": [
+      "You are not authorized to access this tasheel order uuid"
+    ]
+  }
+}
+```
+- `422` – Validation Error
+
+```json
+{
+  "remark": "validation_error",
+  "status": "error",
+  "message": {
+    "error": [
+      "The airline refund amount field is required."
+    ]
+  }
+}
+```
+#### 11.3.2 Create Refund Request
 
 - Method: `POST`
 - URL: `/api/refund/request`
@@ -485,7 +588,7 @@ Error responses:
 }
 ```
 
-#### 11.3.2 List Refund Requests
+#### 11.3.3 List Refund Requests
 
 - Method: `GET`
 - URL: `/api/refund/`
@@ -530,7 +633,7 @@ Success response (`200`):
 }
 ```
 
-#### 11.3.3 Get Refund Request Details
+#### 11.3.4 Get Refund Request Details
 
 - Method: `GET`
 - URL: `/api/refund/{id}`
