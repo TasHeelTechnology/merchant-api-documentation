@@ -377,11 +377,12 @@ Expected headers:
 ```http
 Authorization: Bearer <access_token>
 Accept: application/json
+Content-Type: application/json
 ```
 
 ### 11.3 Endpoints
 
-#### 11.3.1 Create Refund Request
+#### 11.3.1 Calculate Refund Summary
 
 - Method: `POST`
 - URL: `/api/refund/request`
@@ -390,52 +391,73 @@ Request body:
 
 ```json
 {
-  "tasheel_order_uuid": "c5ea8070-5f67-4f7f-8fe0-3d95ff2d95e5",
-  "ticket_amount": 120.5,
-  "airline_refund_amount": 100,
-  "currency": "OMR",
-  "merchant_id": "123",
-  "callback_url": "https://merchant.example.com/refunds/callback"
+  "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
+  "airline_refund_amount": 70,
+  "currency": "OMR"
 }
 ```
 
 Validation rules:
 
 - `tasheel_order_uuid`: required, string, max length `36` (Payment Link UUID)
-- `ticket_amount`: optional, numeric, min `0` (accepted but backend calculates the authoritative ticket amount from `tasheel_order_uuid`)
 - `airline_refund_amount`: required, numeric, min `0`, must be less than or equal to backend-calculated ticket amount
 - `currency`: required, string, max length `10`
-- `merchant_id`: required, string, max length `255`
-- `callback_url`: optional, valid URL, max length `1000`
-
-Callback behavior:
-
-- If `callback_url` is provided, the system sends a `POST` JSON callback to that URL when admin processing is completed.
-- Processing completion statuses are:
-  - `approved` (status `1`)
-  - `rejected` (status `2`)
 
 Success response (`200`):
 
 ```json
 {
-  "remark": "refund_request_summary",
+  "remark": "refund_summary",
   "status": "success",
-  "message": {
-    "success": "Refund request accepted and summary calculated"
-  },
   "data": {
-    "tasheel_order_uuid": "c5ea8070-5f67-4f7f-8fe0-3d95ff2d95e5",
-    "merchant_id": "123",
-    "callback_url": "https://merchant.example.com/refunds/callback",
     "summary": {
-      "inputs": {},
-      "derived": {},
-      "admin_guidance": {}
-    },
-    "difficulty": {
-      "flag": false,
-      "reason": null
+      "total_amount": 300,
+      "refund_amount": 70,
+      "paid_amount": 106.5,
+      "paid_ticket_amount": 75,
+      "ticket_refund_on_paid_portion": 70,
+      "total_remaining": 225,
+      "service_fee_total": 30,
+      "vat_total": 1.5,
+      "captured_service_fees_with_vat": 31.5,
+      "service_fees_collection_mode": "DOWNPAYMENT_ONLY",
+      "is_downpayment_paid": true,
+      "shortage_on_refund": 155,
+      "refund_effect_on_next_installments": {
+        "shortage_before_capture": 155,
+        "captured_from_next_installments": 155,
+        "shortage_after_capture": 0,
+        "installments_to_cancel_count": 0
+      },
+      "next_installments": [
+        {
+          "id": 1026,
+          "amount": 75,
+          "installment_date": "2026-05-09",
+          "is_downpayment": false,
+          "capture_amount": 75,
+          "cancel_amount": 0,
+          "action": "capture_then_cancel"
+        },
+        {
+          "id": 1027,
+          "amount": 75,
+          "installment_date": "2026-06-08",
+          "is_downpayment": false,
+          "capture_amount": 75,
+          "cancel_amount": 0,
+          "action": "capture_then_cancel"
+        },
+        {
+          "id": 1028,
+          "amount": 75,
+          "installment_date": "2026-07-08",
+          "is_downpayment": false,
+          "capture_amount": 5,
+          "cancel_amount": 70,
+          "action": "capture_then_cancel"
+        }
+      ]
     }
   }
 }
@@ -484,7 +506,119 @@ Error responses:
   }
 }
 ```
+#### 11.3.2 Create Refund Request
+- Method: `POST`
+- URL: `/api/refund/request`
 
+Notes:
+
+- This endpoint creates a refund request and immediately attempts auto-approval through the refund approval service.
+
+Request body:
+
+```json
+{
+  "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
+  "airline_refund_amount": 70,
+  "currency": "OMR",
+  "callback_url": "https://merchant.example.com/refunds/callback"
+}
+```
+
+Validation rules:
+
+- `tasheel_order_uuid`: required, string, max length `36` (Payment Link UUID)
+- `airline_refund_amount`: required, numeric, min `0`, must be less than or equal to backend-calculated ticket amount
+- `currency`: required, string, max length `10`
+- `callback_url`: optional, valid URL, max length `1000`
+
+Success response (`200`):
+
+```json
+{
+  "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
+  "total_amount": 300,
+  "refund_amount": 70,
+  "paid_amount": 106.5,
+  "paid_ticket_amount": 75,
+  "service_fee_total": 30,
+  "vat_total": 1.5,
+  "captured_service_fees": 31.5,
+  "shortage_on_refund": 155,
+  "next_installments": [
+    {
+      "id": 966,
+      "amount": 75,
+      "installment_date": "2026-05-05",
+      "is_downpayment": false,
+      "capture_amount": 75,
+      "cancel_amount": 0,
+      "action": "capture_then_cancel"
+    },
+    {
+      "id": 967,
+      "amount": 75,
+      "installment_date": "2026-06-04",
+      "is_downpayment": false,
+      "capture_amount": 75,
+      "cancel_amount": 0,
+      "action": "capture_then_cancel"
+    },
+    {
+      "id": 968,
+      "amount": 75,
+      "installment_date": "2026-07-04",
+      "is_downpayment": false,
+      "capture_amount": 5,
+      "cancel_amount": 70,
+      "action": "capture_then_cancel"
+    }
+  ]
+}
+```
+
+Error responses:
+
+- `422` validation error
+
+```json
+{
+  "remark": "validation_error",
+  "status": "error",
+  "message": {
+    "error": [
+      "The tasheel order uuid field is required."
+    ]
+  }
+}
+```
+- `404` tasheel order uuid not found
+
+```json
+{
+  "remark": "cart_not_found",
+  "status": "error",
+  "message": {
+    "error": [
+      "Payment cart not found for this tasheel order uuid"
+    ]
+  }
+}
+```
+
+- `403` unauthorized access to tasheel order uuid
+
+```json
+{
+  "remark": "merchant_unauthorized",
+  "status": "error",
+  "message": {
+    "error": [
+      "You are not authorized to access this tasheel order uuid"
+    ]
+  }
+}
+```
 #### 11.3.2 List Refund Requests
 
 - Method: `GET`
@@ -573,16 +707,24 @@ Error responses:
 ### 11.4 Quick cURL Examples
 
 ```bash
+curl -X POST "https://<host>/api/refund/calculate-summary" \
+  -H "Authorization: Bearer <token>" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
+    "airline_refund_amount": 70,
+    "currency": "OMR"
+  }'
+
 curl -X POST "https://<host>/api/refund/request" \
   -H "Authorization: Bearer <token>" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{
-    "tasheel_order_uuid": "c5ea8070-5f67-4f7f-8fe0-3d95ff2d95e5",
-    "ticket_amount": 120.5,
-    "airline_refund_amount": 100,
+    "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
+    "airline_refund_amount": 70,
     "currency": "OMR",
-    "merchant_id": "123",
     "callback_url": "https://merchant.example.com/refunds/callback"
   }'
 
