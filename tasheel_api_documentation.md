@@ -218,11 +218,27 @@ POST /checkout/cart
 ```
 GET /checkout/status
 ```
+Use the same JWT access token generated in 2.2 Issue Access Token.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>  // token from POST /oauth/token
+Content-Type: application/json
+```
+```
 **Body Parameters:**
 - `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
 - `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
 - `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
 
+**Sample Request:**
+```json
+{
+  "refCode": "ref_1234567890_1627056000",
+  "cartId": "1b796418-d380-431c-a083-830fe2ec295c",
+  "txnId": "RPBK3THJQ7RB"
+}
+```
 **Response:**
 ```json
 {
@@ -301,10 +317,26 @@ GET /checkout/status
 ```
 DELETE /checkout/cart
 ```
+Use the same JWT access token generated in 2.2 Issue Access Token.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>  // token from POST /oauth/token
+Content-Type: application/json
+```
 **Body Parameters:**
 - `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
 - `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
 - `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+
+**Sample Request:**
+```json
+{
+  "refCode": "ref_1234567890_1627056000",
+  "cartId": "1b796418-d380-431c-a083-830fe2ec295c",
+  "txnId": "RPBK3THJQ7RB"
+}
+```
 
 **Response:**
 ```json
