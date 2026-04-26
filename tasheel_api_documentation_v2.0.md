@@ -21,7 +21,11 @@ Assisted checkout uses **OTP-based temporary authorization** initiated by the me
 ```
 POST /merchant/temp-auth/request
 ```
-
+**Headers:**
+```
+Content-Type: application/json
+Accept: application/json
+```
 **Body:**
 
 ```json
@@ -123,7 +127,11 @@ Occurs when required fields are missing or invalid.
 ```
 POST /merchant/temp-auth/verify
 ```
-
+**Headers:**
+```
+Content-Type: application/json
+Accept: application/json
+```
 **Body:**
 
 ```json
