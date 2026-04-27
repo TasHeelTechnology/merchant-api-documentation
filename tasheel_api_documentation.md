@@ -14,7 +14,7 @@ Merchants authenticate using OAuth flow.
 
 ### 2.1 Create OAuth Client
 ```
-POST api/createOauthClient
+POST api/oauth/clients
 ```
 **Body:**
 ```json
