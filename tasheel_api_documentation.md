@@ -16,6 +16,12 @@ Merchants authenticate using OAuth flow.
 ```
 POST api/oauth/clients
 ```
+**Headers:**
+```
+Authorization: Bearer <access_token> // token from POST /oauth/token
+Content-Type: application/json
+Accept: application/json
+```
 **Body:**
 ```json
 {
@@ -43,7 +49,9 @@ POST /oauth/token
 ```json
 {
   "client_id": 123,
-  "client_secret": "abc123xyz"
+  "client_secret": "abc123xyz",
+  "grant_type": "client_credentials"
+
 }
 ```
 **Response:**
