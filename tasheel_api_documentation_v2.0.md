@@ -667,6 +667,104 @@ If the retry limit is already used, the API returns HTTP 429:
 ```
 
 ---
+### 6 Get Status
+```
+GET /checkout/get-status
+```
+Use the same JWT access token generated in 2.2 Issue Access Token.
+
+**Headers:**
+```
+temp-user-access: <temp_token>
+Content-Type: application/json
+```
+```
+**Body Parameters:**
+- `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
+- `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
+- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+
+**Sample Request:**
+```json
+{
+  "refCode": "ref_1234567890_1627056000",
+  "cartId": "1b796418-d380-431c-a083-830fe2ec295c",
+  "txnId": "RPBK3THJQ7RB"
+}
+```
+**Response:**
+```json
+{
+  "message": "Cart status",
+  "data": {
+    "uuid": "UUID123",
+    "referenceCode": "tasheel123-ORD98765",
+    "payment": {
+      "txn_id": "TXN123456",
+      "created_at": "2025-11-25T10:30:00Z",
+      "try": 1,
+      "status": "completed", // Status options: 1 => "completed", 2 => "pending", 3 => "cancel", default => "unknown".
+      "note": "Downpayment received",
+      "amount": 50.00,
+      "final_amount": 50.00,
+      "currency": "OMR",
+      "ref_code": "tasheel123-ORD98765"
+    },
+    "quotation": {
+      "title": "Cart for John Doe",
+      "description": "Travel package",
+      "package": {
+        "name": "Holiday Package",
+        "details": "Includes flight and hotel"
+      },
+      "plan": {
+        "installments": [
+          {"amount": 50, "due_date": "2025-12-01"},
+          {"amount": 50, "due_date": "2026-01-01"}
+        ]
+      },
+      "base_amount": 150.00,
+      "total_amount": 150.00,
+      "vat_rate": 5,
+      "currency": "OMR",
+      "quotationNumber": "QTN98765"
+    },
+    "user": {
+      "uuid": "USR123",
+      "branch": {"name": "Main Branch"},
+      "branchStaff": {"name": "Staff Name"},
+      "accountNumber": "ACC12345",
+      "firstName": "John",
+      "lastName": "Doe",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "countryCode": "+968",
+      "mobile": "91234567",
+      "balance": 500.00,
+      "image": "https://cdn.tasheel.com/user123.jpg",
+      "address": "Muscat, Oman",
+      "status": "active",
+      "isCompany": false,
+      "malaaCreditScore": 720
+    },
+    "requestData": {
+      "merchantId": "tasheel123",
+      "customerPhone": "96891234567",
+      "cartItems": [
+        {"productId": "FLIGHT001", "quantity": 1, "price": 150, "total": 150}
+      ],
+      "totalAmount": 150,
+      "referenceCode": "tasheel123-ORD98765"
+    }
+  }
+}
+```
+
+#### Status interpretation for payment.status
+- completed: Downpayment paid successfully
+- pending: Payment initialized but still pending
+- cancel: Payment rejected or declined
+- unknown: Treated as cancel
 
 ## 7. Security Considerations
 
