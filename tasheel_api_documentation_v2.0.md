@@ -39,7 +39,8 @@ Accept: application/json
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "OTP_SENT",
   "message": "OTP sent successfully",
   "otp_id": 98
 }
@@ -60,7 +61,8 @@ The merchant should **reuse the returned `otp_id`** when calling the OTP verific
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "OTP_ALREADY_SENT",
   "message": "OTP already sent. Please wait 101 seconds before requesting again.",
   "otp_id": 688,
   "expires_at": "2026-03-08T06:16:14.000000Z"
@@ -186,7 +188,8 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "OTP_VERIFIED",
   "temp_token": "80428f...1b5ea5",
   "expires_at": "2026-01-07T06:39:49.000000Z"
 }
@@ -462,7 +465,8 @@ temp-user-access: <temp_token>
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "CARDS_RETRIEVED",
   "data": [
     {
       "id": 3,
@@ -535,7 +539,8 @@ temp-user-access: <temp_token>
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "DEFAULT_CARD_UPDATED",
   "message": "Default card updated",
   "default_card_id": "3"
 }
@@ -628,7 +633,8 @@ temp-user-access: <temp_token>
 
 ```json
 {
-  "success": true,
+  "status" : "success",
+  "code" : "PAYMENT_SUCCESS",
   "message": "Payment successful",
   "data": {
     "payment_track": "YC3ANYBR5GVG",

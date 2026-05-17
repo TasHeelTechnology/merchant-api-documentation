@@ -206,6 +206,8 @@ POST /checkout/cart
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_CREATED",
   "message": "Cart created successfully",
   "cart_id": "UUID123",
   "ref_code": "tasheel123-ORD98765",
@@ -257,6 +259,8 @@ Content-Type: application/json
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_STATUS",
   "message": "Cart status",
   "data": {
     "uuid": "UUID123",
@@ -356,6 +360,8 @@ Content-Type: application/json
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_DELETED",
   "message": "Cart deleted successfully"
 }
 ```
@@ -432,7 +438,7 @@ Content-Type: application/json
 #### 11.3.1 Calculate Refund Summary
 
 - Method: `POST`
-- URL: `/api/refund/request`
+- URL: `/api/refund/calculate-summary`
 
 Request body:
 
@@ -454,8 +460,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refund_summary",
   "status": "success",
+  "code": "refund_summary",
   "data": {
     "summary": {
       "total_amount": 300,
@@ -586,6 +592,11 @@ Success response (`200`):
 
 ```json
 {
+  "status" : "success",
+  "code" : "refund_request_summary",
+  "message": {
+      "success": "Refund request accepted and approved successfully"
+    },
   "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
   "total_amount": 300,
   "refund_amount": 70,
@@ -686,8 +697,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refunds_list",
   "status": "success",
+  "code": "refunds_list",
   "data": [
     {
       "id": 1,
@@ -730,8 +741,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refund_details",
   "status": "success",
+  "code": "refund_details",
   "data": {
     "refund": {
       "id": 1,
