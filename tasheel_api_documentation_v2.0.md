@@ -134,10 +134,6 @@ Occurs when required fields are missing or invalid.
 
 ```json
 {
-  "success": false,
-  "message": "OTP creation failed"
-}
-{
     "status": "error",
     "code": "OTP_CREATION_FAILED",
     "message": "OTP creation failed",
