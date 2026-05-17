@@ -160,7 +160,11 @@ POST /checkout/summery
 {
   "status": "error",
   "code": "LOAN_NOT_ELIGIBLE_OVERDUE",
-  "message": "User is not eligible for a new loan due to overdue installments."
+  "message": "User is not eligible for a new loan due to overdue installments.",
+  "errors": {
+    "LOAN_NOT_ELIGIBLE_OVERDUE": [
+        "The user has overdue installments.",
+    ],
 }
 ```
 
@@ -214,7 +218,10 @@ POST /checkout/cart
 **Expected Error Response (422 - Invalid `cartValidity` format):**
 ```json
 {
-  "error": {
+  "status": "error",
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": {
     "cartValidity": [
       "The cart validity format is invalid."
     ]
@@ -509,11 +516,12 @@ Error responses:
 
 ```json
 {
-  "remark": "validation_error",
   "status": "error",
-  "message": {
-    "error": [
-      "The tasheel order uuid field is required."
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "errors": {
+    "tasheel_order_uuid": [
+      "The tasheel order uuid may not be greater than 36 characters."
     ]
   }
 }
@@ -523,11 +531,12 @@ Error responses:
 
 ```json
 {
-  "remark": "cart_not_found",
   "status": "error",
-  "message": {
-    "error": [
-      "Payment cart not found for this tasheel order uuid"
+  "code": "CART_NOT_FOUND",
+  "message": "Cart not found.",
+  "errors": {
+    "CART_NOT_FOUND": [
+      "Payment cart not found"
     ]
   }
 }
@@ -537,11 +546,12 @@ Error responses:
 
 ```json
 {
-  "remark": "merchant_unauthorized",
   "status": "error",
-  "message": {
-    "error": [
-      "You are not authorized to access this tasheel order uuid"
+  "code": "MERCHANT_UNAUTHORIZED",
+  "message": "You are not permitted to access this tasheel order",
+  "errors": {
+    "MERCHANT_UNAUTHORIZED": [
+      "You are not permitted to access this tasheel order"
     ]
   }
 }
@@ -623,10 +633,11 @@ Error responses:
 
 ```json
 {
-  "remark": "validation_error",
   "status": "error",
-  "message": {
-    "error": [
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "errors": {
+    "tasheel_order_uuid": [
       "The tasheel order uuid field is required."
     ]
   }
@@ -636,11 +647,12 @@ Error responses:
 
 ```json
 {
-  "remark": "cart_not_found",
   "status": "error",
-  "message": {
-    "error": [
-      "Payment cart not found for this tasheel order uuid"
+  "code": "CART_NOT_FOUND",
+  "message": "Cart not found.",
+  "errors": {
+    "CART_NOT_FOUND": [
+      "Payment cart not found"
     ]
   }
 }
@@ -650,11 +662,12 @@ Error responses:
 
 ```json
 {
-  "remark": "merchant_unauthorized",
   "status": "error",
-  "message": {
-    "error": [
-      "You are not authorized to access this tasheel order uuid"
+  "code": "MERCHANT_UNAUTHORIZED",
+  "message": "You are not permitted to access this tasheel order",
+  "errors": {
+    "MERCHANT_UNAUTHORIZED": [
+      "You are not permitted to access this tasheel order"
     ]
   }
 }

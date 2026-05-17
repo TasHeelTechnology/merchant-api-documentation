@@ -83,8 +83,14 @@ Occurs when required fields are missing or invalid.
 
 ```json
 {
-  "success": false,
-  "message": "The mobile field is required."
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "mobile": [
+            "The mobile field is required."
+        ]
+    }
 }
 ```
 
@@ -94,8 +100,14 @@ Occurs when required fields are missing or invalid.
 
 ```json
 {
-  "success": false,
-  "message": "No user found for this mobile"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "No user found for this mobile",
+    "errors": {
+        "not_found": [
+            "User not found for this mobile"
+        ]
+    }
 }
 ```
 
@@ -105,8 +117,14 @@ Occurs when required fields are missing or invalid.
 
 ```json
 {
-  "success": false,
-  "message": "User has overdue installments. Assisted checkout blocked."
+    "status": "error",
+    "code": "HAS_OVERDUE",
+    "message": "User has overdue installments. Assisted checkout blocked.",
+    "errors": {
+        "HAS_OVERDUE": [
+            "User has overdue installments"
+        ]
+    }
 }
 ```
 
@@ -116,8 +134,14 @@ Occurs when required fields are missing or invalid.
 
 ```json
 {
-  "success": false,
-  "message": "OTP creation failed"
+    "status": "error",
+    "code": "OTP_CREATION_FAILED",
+    "message": "OTP creation failed",
+    "errors": {
+        "OTP_CREATION_FAILED": [
+            "OTP creation failed"
+        ]
+    }
 }
 ```
 ---
@@ -175,8 +199,65 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "The otp must be 6 digits."
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "otp": [
+            "The otp must be 6 digits."
+        ]
+    }
+}
+```
+
+---
+
+**422 – Validation Error**
+
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "merchant_uuid": [
+            "The selected merchant uuid is invalid."
+        ]
+    }
+}
+```
+
+---
+
+**422 – Validation Error**
+
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "merchant_uuid": [
+            "The merchant uuid field is required."
+        ]
+    }
+}
+```
+
+---
+
+**422 – Validation Error**
+
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "mobile": [
+            "The mobile field is required."
+        ]
+    }
 }
 ```
 
@@ -186,8 +267,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "No user found for this mobile"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "No user found for this mobile",
+    "errors": {
+        "NOT_FOUND": [
+            "No user found for this mobile"
+        ]
+    }
 }
 ```
 
@@ -197,8 +284,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "Invalid OTP session"
+    "status": "error",
+    "code": "INVALID_SESSION",
+    "message": "Invalid OTP session",
+    "errors": {
+        "INVALID_SESSION": [
+            "Invalid OTP session"
+        ]
+    }
 }
 ```
 
@@ -209,9 +302,18 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "Wrong OTP entered.",
-  "remaining_attempts": 1
+    "status": "error",
+    "code": "INVALID_OTP",
+    "message": "Wrong OTP entered.",
+    "errors": {
+        "INVALID_OTP": [
+            "Wrong OTP entered."
+        ],
+        "remaining_attempts": [
+            1
+        ]
+    }
+}
 
 ```
 
@@ -221,8 +323,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "Too many wrong attempts. Please request a new OTP."
+    "status": "error",
+    "code": "TOO_MANY_WRONG_ATTEMPTS",
+    "message": "Too many wrong attempts. Please request a new OTP.",
+    "errors": {
+        "TOO_MANY_ATTEMPTS": [
+            "Too many wrong attempts."
+        ]
+    }
 }
 ```
 
@@ -232,8 +340,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "Merchant mismatch"
+    "status": "error",
+    "code": "MERCHANT_MISMATCH",
+    "message": "Merchant mismatch",
+    "errors": {
+        "MERCHANT_MISMATCH": [
+            "Merchant mismatch"
+        ]
+    }
 }
 ```
 
@@ -243,8 +357,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "OTP session already used"
+    "status": "error",
+    "code": "SESSION_ALREADY_USED",
+    "message": "OTP session already used",
+    "errors": {
+        "SESSION_ALREADY_USED": [
+            "OTP session already used"
+        ]
+    }
 }
 ```
 
@@ -254,8 +374,14 @@ For security purposes, OTP verification attempts are restricted.
 
 ```json
 {
-  "success": false,
-  "message": "OTP session expired"
+    "status": "error",
+    "code": "OTP_EXPIRED",
+    "message": "OTP expired",
+    "errors": {
+        "OTP_EXPIRED": [
+            "OTP expired"
+        ]
+    }
 }
 ```
 
@@ -362,8 +488,14 @@ Notes:
 
 ```json
 {
-  "success": false,
-  "message": "Temp token missing"
+    "status": "error",
+    "code": "TOKEN_MISSING",
+    "message": "Temp token missing",
+    "errors": {
+        "TOKEN_MISSING": [
+            "Temp token missing"
+        ]
+    }
 }
 ```
 
@@ -373,8 +505,14 @@ Notes:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid or expired token"
+    "status": "error",
+    "code": "INVALID_TOKEN",
+    "message": "Invalid or expired token",
+    "errors": {
+        "INVALID_TOKEN": [
+            "Invalid or expired token"
+        ]
+    }
 }
 ```
 
@@ -415,8 +553,14 @@ Notes:
 
 ```json
 {
-  "success": false,
-  "message": "Temp token missing"
+    "status": "error",
+    "code": "TOKEN_MISSING",
+    "message": "Temp token missing",
+    "errors": {
+        "TOKEN_MISSING": [
+            "Temp token missing"
+        ]
+    }
 }
 ```
 
@@ -426,8 +570,14 @@ Notes:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid or expired token"
+    "status": "error",
+    "code": "INVALID_TOKEN",
+    "message": "Invalid or expired token",
+    "errors": {
+        "INVALID_TOKEN": [
+            "Invalid or expired token"
+        ]
+    }
 }
 ```
 
@@ -437,8 +587,14 @@ Notes:
 
 ```json
 {
-  "success": false,
-  "message": "Card not found"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "Card not found",
+    "errors": {
+        "NOT_FOUND": [
+            "Card not found"
+        ]
+    }
 }
 ```
 
@@ -498,30 +654,72 @@ temp-user-access: <temp_token>
   ```
 * If a retry attempt is made **before the cooldown expires**, the API returns **HTTP 429**:
 
-```json
-{
-  "success": false,
-  "message": "Previous payment failed. Please wait 37 seconds before retrying with the same card.",
-  "retry_after_seconds": 37
-}
-```
-If the retry limit is already used, the API returns HTTP 429:
-
-```json
-{
-  "success": false,
-  "message": "Retry already used for this payment attempt with the selected card."
-}
-```
 ---
 ## Expected Error Responses
 
-**400 – Validation Error**
+**429 – Too Many Requests**
 
 ```json
 {
-  "success": false,
-  "message": "The cart uuid field is required."
+    "status": "error",
+    "code": "PAYMENT_FAILED",
+    "message":"Previous payment failed. Please wait 37 seconds before retrying with the same card.",
+    "errors": {
+        "retry_after_seconds": [
+            37,
+        ],
+    }
+}
+```
+---
+
+If the retry limit is already used, the API returns HTTP 429:
+
+**429 – Too Many Requests**
+
+```json
+{
+    "status": "error",
+    "code": "TOO_MANY_ATTEMPTS",
+    "message":"Retry already used for this payment attempt with the selected card.",
+    "errors": {
+        "TOO_MANY_ATTEMPTS": [
+            "Retry count 3 exceeded allowed retry count of 2.",
+        ],
+    }
+}
+```
+---
+
+**422 – Validation Error**
+
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "errors": {
+        "cart_uuid": [
+            "The cart uuid field is required."
+        ]
+    }
+}
+```
+
+---
+
+**422 – Validation Error**
+
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "errors": {
+        "default_card_id": [
+            "The default card id field is required."
+        ]
+    }
 }
 ```
 
@@ -531,8 +729,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Temp token missing"
+    "status": "error",
+    "code": "TOKEN_MISSING",
+    "message": "Temp token missing",
+    "errors": {
+        "TOKEN_MISSING": [
+            "Temp token missing"
+        ]
+    }
 }
 ```
 
@@ -542,8 +746,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid or expired token"
+    "status": "error",
+    "code": "INVALID_TOKEN",
+    "message": "Invalid or expired token",
+    "errors": {
+        "INVALID_TOKEN": [
+            "Invalid or expired token"
+        ]
+    }
 }
 ```
 
@@ -553,8 +763,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "User not found"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "User not found",
+    "errors": {
+        "NOT_FOUND": [
+            "User not found"
+        ]
+    }
 }
 ```
 
@@ -564,8 +780,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid cart reference"
+    "status": "error",
+    "code": "INVALID_CART_REF",
+    "message": "Invalid cart reference",
+    "errors": {
+        "INVALID_CART_REF": [
+            "Invalid cart reference"
+        ]
+    }
 }
 ```
 
@@ -575,8 +797,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Cart does not belong to this user"
+    "status": "error",
+    "code": "INVALID_CART",
+    "message": "Cart does not belong to this user",
+    "errors": {
+        "INVALID_CART": [
+            "Cart does not belong to this user"
+        ]
+    }
 }
 ```
 
@@ -586,8 +814,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Cart has expired"
+    "status": "error",
+    "code": "EXPIRED_CART",
+    "message": "Cart has expired",
+    "errors": {
+        "EXPIRED_CART": [
+            "Cart has expired"
+        ]
+    }
 }
 ```
 
@@ -597,8 +831,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Card not found"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "Card not found",
+    "errors": {
+        "NOT_FOUND": [
+            "Card not found"
+        ]
+    }
 }
 ```
 
@@ -608,8 +848,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "No card found, please add card to your Tasheel account"
+    "status": "error",
+    "code": "NOT_FOUND",
+    "message": "No card found, please add card to your Tasheel account",
+    "errors": {
+        "NOT_FOUND": [
+            "No card found, please add card to your Tasheel account"
+        ]
+    }
 }
 ```
 
@@ -619,8 +865,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid payment amount"
+    "status": "error",
+    "code": "INVALID_AMOUNT",
+    "message": "Invalid payment amount",
+    "errors": {
+        "INVALID_AMOUNT": [
+            50
+        ]
+    }
 }
 ```
 
@@ -630,8 +882,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Payment failed. Please wait 1 minute before retrying with the same card. Only one retry is allowed."
+    "status": "error",
+    "code": "PAYMENT_FAILED",
+    "message": "Previous payment failed. Please wait 60 seconds before retrying with the same card.",
+    "errors": {
+        "retry_after_seconds": [
+            50
+        ]
+    }
 }
 ```
 ---
@@ -640,8 +898,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Payment gateway not available"
+    "status": "error",
+    "code": "PAYMENT_GATEWAY_NOT_FOUND",
+    "message": "Payment gateway not available",
+    "errors": {
+        "PAYMENT_GATEWAY_NOT_FOUND": [
+            "Payment gateway not available"
+        ]
+    }
 }
 ```
 
@@ -651,8 +915,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Payment gateway configuration error (Paymob keys missing)"
+    "status": "error",
+    "code": "CONFIGURATION_ERROR",
+    "message": "Payment gateway configuration error (Paymob keys missing)",
+    "errors": {
+        "CONFIGURATION_ERROR": [
+            "Payment gateway configuration error"
+        ]
+    }
 }
 ```
 ---
@@ -661,8 +931,14 @@ If the retry limit is already used, the API returns HTTP 429:
 
 ```json
 {
-  "success": false,
-  "message": "Failed to process payment"
+    "status": "error",
+    "code": "PAYMENT_FAILED",
+    "message": "Payment failed. Please wait 1 minute before retrying with the same card.",
+    "errors": {
+        "PAYMENT_FAILED": [
+            "Payment failed."
+        ]
+    }
 }
 ```
 
