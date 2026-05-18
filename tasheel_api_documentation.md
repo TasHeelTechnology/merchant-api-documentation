@@ -167,6 +167,7 @@ POST /checkout/summery
     "LOAN_NOT_ELIGIBLE_OVERDUE": [
         "The user has overdue installments.",
     ],
+  }
 }
 ```
 
