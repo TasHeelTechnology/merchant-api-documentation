@@ -109,6 +109,8 @@ POST /checkout/summery
 ```json
 
 {
+  "status": "success",
+  "code": "CART_SUMMARY",
   "message": "Cart summary",
   "cart": {
     "base_amount": 150.00,
@@ -165,7 +167,7 @@ POST /checkout/summery
     "LOAN_NOT_ELIGIBLE_OVERDUE": [
         "The user has overdue installments.",
     ],
-}
+
 ```
 
 ### 6.2 Create Cart
