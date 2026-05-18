@@ -109,6 +109,8 @@ POST /checkout/summery
 ```json
 
 {
+  "status": "success",
+  "code": "CART_SUMMARY",
   "message": "Cart summary",
   "cart": {
     "base_amount": 150.00,
