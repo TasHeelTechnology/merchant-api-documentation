@@ -160,7 +160,11 @@ POST /checkout/summery
 {
   "status": "error",
   "code": "LOAN_NOT_ELIGIBLE_OVERDUE",
-  "message": "User is not eligible for a new loan due to overdue installments."
+  "message": "User is not eligible for a new loan due to overdue installments.",
+  "errors": {
+    "LOAN_NOT_ELIGIBLE_OVERDUE": [
+        "The user has overdue installments.",
+    ],
 }
 ```
 
@@ -202,6 +206,8 @@ POST /checkout/cart
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_CREATED",
   "message": "Cart created successfully",
   "cart_id": "UUID123",
   "ref_code": "tasheel123-ORD98765",
@@ -214,7 +220,10 @@ POST /checkout/cart
 **Expected Error Response (422 - Invalid `cartValidity` format):**
 ```json
 {
-  "error": {
+  "status": "error",
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": {
     "cartValidity": [
       "The cart validity format is invalid."
     ]
@@ -250,6 +259,8 @@ Content-Type: application/json
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_STATUS",
   "message": "Cart status",
   "data": {
     "uuid": "UUID123",
@@ -349,6 +360,8 @@ Content-Type: application/json
 **Response:**
 ```json
 {
+  "status": "success",
+  "code": "CART_DELETED",
   "message": "Cart deleted successfully"
 }
 ```
@@ -425,7 +438,7 @@ Content-Type: application/json
 #### 11.3.1 Calculate Refund Summary
 
 - Method: `POST`
-- URL: `/api/refund/request`
+- URL: `/api/refund/calculate-summary`
 
 Request body:
 
@@ -447,8 +460,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refund_summary",
   "status": "success",
+  "code": "refund_summary",
   "data": {
     "summary": {
       "total_amount": 300,
@@ -509,11 +522,12 @@ Error responses:
 
 ```json
 {
-  "remark": "validation_error",
   "status": "error",
-  "message": {
-    "error": [
-      "The tasheel order uuid field is required."
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "errors": {
+    "tasheel_order_uuid": [
+      "The tasheel order uuid may not be greater than 36 characters."
     ]
   }
 }
@@ -523,11 +537,12 @@ Error responses:
 
 ```json
 {
-  "remark": "cart_not_found",
   "status": "error",
-  "message": {
-    "error": [
-      "Payment cart not found for this tasheel order uuid"
+  "code": "CART_NOT_FOUND",
+  "message": "Cart not found.",
+  "errors": {
+    "CART_NOT_FOUND": [
+      "Payment cart not found"
     ]
   }
 }
@@ -537,11 +552,12 @@ Error responses:
 
 ```json
 {
-  "remark": "merchant_unauthorized",
   "status": "error",
-  "message": {
-    "error": [
-      "You are not authorized to access this tasheel order uuid"
+  "code": "MERCHANT_UNAUTHORIZED",
+  "message": "You are not permitted to access this tasheel order",
+  "errors": {
+    "MERCHANT_UNAUTHORIZED": [
+      "You are not permitted to access this tasheel order"
     ]
   }
 }
@@ -576,6 +592,11 @@ Success response (`200`):
 
 ```json
 {
+  "status" : "success",
+  "code" : "refund_request_summary",
+  "message": {
+      "success": "Refund request accepted and approved successfully"
+    },
   "tasheel_order_uuid": "07da47f6-ddd7-4672-812e-26f68f83f860",
   "total_amount": 300,
   "refund_amount": 70,
@@ -623,10 +644,11 @@ Error responses:
 
 ```json
 {
-  "remark": "validation_error",
   "status": "error",
-  "message": {
-    "error": [
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "errors": {
+    "tasheel_order_uuid": [
       "The tasheel order uuid field is required."
     ]
   }
@@ -636,11 +658,12 @@ Error responses:
 
 ```json
 {
-  "remark": "cart_not_found",
   "status": "error",
-  "message": {
-    "error": [
-      "Payment cart not found for this tasheel order uuid"
+  "code": "CART_NOT_FOUND",
+  "message": "Cart not found.",
+  "errors": {
+    "CART_NOT_FOUND": [
+      "Payment cart not found"
     ]
   }
 }
@@ -650,11 +673,12 @@ Error responses:
 
 ```json
 {
-  "remark": "merchant_unauthorized",
   "status": "error",
-  "message": {
-    "error": [
-      "You are not authorized to access this tasheel order uuid"
+  "code": "MERCHANT_UNAUTHORIZED",
+  "message": "You are not permitted to access this tasheel order",
+  "errors": {
+    "MERCHANT_UNAUTHORIZED": [
+      "You are not permitted to access this tasheel order"
     ]
   }
 }
@@ -673,8 +697,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refunds_list",
   "status": "success",
+  "code": "refunds_list",
   "data": [
     {
       "id": 1,
@@ -717,8 +741,8 @@ Success response (`200`):
 
 ```json
 {
-  "remark": "refund_details",
   "status": "success",
+  "code": "refund_details",
   "data": {
     "refund": {
       "id": 1,
