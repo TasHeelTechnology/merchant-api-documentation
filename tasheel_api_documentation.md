@@ -18,7 +18,7 @@ POST api/oauth/clients
 ```
 **Headers:**
 ```
-Authorization: Bearer <access_token> // token from POST /oauth/token
+Authorization: Bearer <access_token> // token from POST api/oauth/token
 Content-Type: application/json
 Accept: application/json
 ```
@@ -43,7 +43,7 @@ Accept: application/json
 
 ### 2.2 Issue Access Token
 ```
-POST /oauth/token
+POST api/oauth/token
 ```
 **Body:**
 ```json
@@ -241,7 +241,7 @@ Use the same JWT access token generated in 2.2 Issue Access Token.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>  // token from POST /oauth/token
+Authorization: Bearer <access_token>  // token from POST api/oauth/token
 Content-Type: application/json
 ```
 ```
@@ -342,7 +342,7 @@ Use the same JWT access token generated in 2.2 Issue Access Token.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>  // token from POST /oauth/token
+Authorization: Bearer <access_token>  // token from POST api/oauth/token
 Content-Type: application/json
 ```
 **Body Parameters:**
