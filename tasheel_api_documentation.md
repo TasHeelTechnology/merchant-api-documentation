@@ -102,57 +102,236 @@ POST /checkout/summery
   "cartItems": [
     {"productId": "FLIGHT001", "quantity": 1, "price": 150, "total": 150}
   ],
-  "totalAmount": 150
+  "totalAmount": 150,
+  "service_fee_pass_to_customer": true
+
 }
 ```
 **Response:**
 ```json
 
 {
-  "status": "success",
-  "code": "CART_SUMMARY",
-  "message": "Cart summary",
-  "cart": {
-    "base_amount": 150.00,
-    "total_amount_without_vat": 150.00,
-    "total_amount_with_vat": 157.50,
-    "shortage": 0.00,
-    "per_installment": 50.00,
-    "down_payment_without_vat": 50.00,
-    "down_payment_with_vat": 52.50,
-    "remaining_after_down_payment": 105.00,
-    "per_installment_with_vat": 52.50,
-    "used_eligibility": 150.00,
-    "eligibility": 500.00,
-    "is_eligible": true,
-    "plan_html": "<div>Installment Plan HTML</div>",
-    "json_rates": {
-      "vat_rate": 5,
-      "pg_rate": 2,
-      "merchant_rate": 1,
-      "tasheel_profit_rate": 3
+    "status": "success",
+    "code": "CART_SUMMARY",
+    "message": "Cart summary",
+    "cart": {
+        "base_amount": 151500000,
+        "total_amount_without_vat": 166650000,
+        "total_amount_with_vat": 167407500,
+        "total_vat_amount": 757500,
+        "shortage": 167358099.475,
+        "per_installment": 12350.131,
+        "down_payment_without_vat": 166612949.606,
+        "down_payment_with_vat": 167370449.607,
+        "remaining_after_down_payment": 37050.393,
+        "per_installment_with_vat": 12350.131,
+        "used_eligibility": 49400.525,
+        "eligibility": 49400.525,
+        "is_eligible": true,
+        "plan_html": false,
+        "installment_calendar": [
+            {
+                "sequence": 1,
+                "type": "down_payment",
+                "due_date": "2026-08-17",
+                "amount": 167370449.607
+            },
+            {
+                "sequence": 2,
+                "type": "installment",
+                "due_date": "2026-09-16",
+                "amount": 12350.131
+            },
+            {
+                "sequence": 3,
+                "type": "installment",
+                "due_date": "2026-10-16",
+                "amount": 12350.131
+            },
+            {
+                "sequence": 4,
+                "type": "installment",
+                "due_date": "2026-11-15",
+                "amount": 12350.131
+            }
+        ],
+        "json_rates": "{\"customer_rate\":0,\"pg_rate\":0,\"vat_rate\":0.05,\"merchant_rate\":0.03,\"tasheel_profit_rate\":0,\"service_fee_type\":\"percent\",\"service_fee_value\":10,\"service_fee_pass_to_customer\":1}",
+        "customer_rate": 0,
+        "vat_rate": 0.05,
+        "pg_rate": 0,
+        "merchant_rate": 0.03,
+        "tasheel_profit_rate": 0,
+        "tasheel_price_without_vat": 0,
+        "tasheel_vat_amount": 0,
+        "monthly_installments": 3,
+        "user_eligibility_data": {
+            "amount": 49400.52499771118,
+            "eligible": true,
+            "daysSinceLastLoan": 4,
+            "minimum_days_required": -1,
+            "user_status": 1,
+            "kyc_status": 1,
+            "maximum_limit": "50000.000",
+            "total_loan_due": 599.4750022888184,
+            "has_active_loan": true,
+            "error_message": null,
+            "eligibility_errors": []
+        },
+        "service_fee_amount": 15150000,
+        "service_fee_vat": 757500,
+        "service_fee_total": 15907500,
+        "merchant_service_fee_amount": 15150000,
+        "merchant_service_fee_vat": 757500,
+        "merchant_service_fee_total": 15907500,
+        "service_fee_pass_to_customer": 1,
+        "service_fee_type": "percent",
+        "service_fee_value": 10,
+        "merchant_commission_amount": 12120000,
+        "merchant_settlement_amount": 139380000,
+        "tasheel_profit_excl_vat": 15150000,
+        "tasheel_profit_vat": 757500,
+        "tasheel_profit_incl_vat": 15907500,
+        "applied_mdr_rate": 8,
+        "applied_mdr_basis": "merchant",
+        "applied_mdr_base_amount": 151500000,
+        "tasheel_commission_amount": 12120000
     },
-    "customer_rate": 1.5,
-    "vat_rate": 5,
-    "pg_rate": 2,
-    "merchant_rate": 1,
-    "tasheel_profit_rate": 3,
-    "tasheel_price_without_vat": 150.00,
-    "tasheel_vat_amount": 7.50,
-    "monthly_installments": [
-      {"amount": 52.50, "due_date": "2025-12-01"},
-      {"amount": 52.50, "due_date": "2026-01-01"}
+    "merchant_credit_utilisation": {
+        "eligible_limit": null,
+        "current_eligible": null,
+        "utilised": null
+    },
+    "snapshot": {
+        "tasheel": {
+            "base_amount": 151500000,
+            "total_amount_without_vat": 166650000,
+            "total_amount_with_vat": 167407500,
+            "total_vat_amount": 757500,
+            "shortage": 167358099.475,
+            "per_installment": 12350.131,
+            "down_payment_without_vat": 166612949.606,
+            "down_payment_with_vat": 167370449.607,
+            "remaining_after_down_payment": 37050.393,
+            "per_installment_with_vat": 12350.131,
+            "used_eligibility": 49400.525,
+            "eligibility": 49400.525,
+            "is_eligible": true,
+            "plan_html": false,
+            "installment_calendar": [
+                {
+                    "sequence": 1,
+                    "type": "down_payment",
+                    "due_date": "2026-08-17",
+                    "amount": 167370449.607
+                },
+                {
+                    "sequence": 2,
+                    "type": "installment",
+                    "due_date": "2026-09-16",
+                    "amount": 12350.131
+                },
+                {
+                    "sequence": 3,
+                    "type": "installment",
+                    "due_date": "2026-10-16",
+                    "amount": 12350.131
+                },
+                {
+                    "sequence": 4,
+                    "type": "installment",
+                    "due_date": "2026-11-15",
+                    "amount": 12350.131
+                }
+            ],
+            "json_rates": "{\"customer_rate\":0,\"pg_rate\":0,\"vat_rate\":0.05,\"merchant_rate\":0.03,\"tasheel_profit_rate\":0,\"service_fee_type\":\"percent\",\"service_fee_value\":10,\"service_fee_pass_to_customer\":1}",
+            "customer_rate": 0,
+            "vat_rate": 0.05,
+            "pg_rate": 0,
+            "merchant_rate": 0.03,
+            "tasheel_profit_rate": 0,
+            "tasheel_price_without_vat": 0,
+            "tasheel_vat_amount": 0,
+            "monthly_installments": 3,
+            "user_eligibility_data": {
+                "amount": 49400.52499771118,
+                "eligible": true,
+                "daysSinceLastLoan": 4,
+                "minimum_days_required": -1,
+                "user_status": 1,
+                "kyc_status": 1,
+                "maximum_limit": "50000.000",
+                "total_loan_due": 599.4750022888184,
+                "has_active_loan": true,
+                "error_message": null,
+                "eligibility_errors": []
+            },
+            "service_fee_amount": 15150000,
+            "service_fee_vat": 757500,
+            "service_fee_total": 15907500,
+            "merchant_service_fee_amount": 15150000,
+            "merchant_service_fee_vat": 757500,
+            "merchant_service_fee_total": 15907500,
+            "service_fee_pass_to_customer": 1,
+            "service_fee_type": "percent",
+            "service_fee_value": 10,
+            "merchant_commission_amount": 12120000,
+            "merchant_settlement_amount": 139380000,
+            "tasheel_profit_excl_vat": 15150000,
+            "tasheel_profit_vat": 757500,
+            "tasheel_profit_incl_vat": 15907500,
+            "applied_mdr_rate": 8,
+            "applied_mdr_basis": "merchant",
+            "applied_mdr_base_amount": 151500000,
+            "tasheel_commission_amount": 12120000
+        },
+        "items": [
+            {
+                "productId": "FLIGHTS_TOTAL",
+                "quantity": 1,
+                "price": 10.2,
+                "total": 10.2
+            },
+            {
+                "productId": "EXTRAS",
+                "quantity": 1,
+                "price": 10.2,
+                "total": 10.2
+            }
+        ],
+        "meta": {
+            "merchant_id": 17,
+            "merchant_uuid": "8f431d21-4975-4c8f-b11f-080dbb680c72",
+            "user_id": 735
+        }
+    },
+    "overdue": false,
+    "installment_calendar": [
+        {
+            "sequence": 1,
+            "type": "down_payment",
+            "due_date": "2026-08-17",
+            "amount": 167370449.607
+        },
+        {
+            "sequence": 2,
+            "type": "installment",
+            "due_date": "2026-09-16",
+            "amount": 12350.131
+        },
+        {
+            "sequence": 3,
+            "type": "installment",
+            "due_date": "2026-10-16",
+            "amount": 12350.131
+        },
+        {
+            "sequence": 4,
+            "type": "installment",
+            "due_date": "2026-11-15",
+            "amount": 12350.131
+        }
     ],
-    "user_eligibility_data": {
-      "credit_score": 720,
-      "max_limit": 1000.00
-    }
-  },
-  "merchant_credit_utilisation": {
-    "eligible_limit": 10000,
-    "current_eligible": 10000,
-    "utilised": 0
-  }
+    "overdue_message": null
 }
 
 ```
@@ -188,6 +367,7 @@ POST /checkout/cart
 - `totalAmount` (required): A numeric value representing the total amount. Minimum value is 0.
 - `referenceCode` (optional): A string representing the reference code. Maximum length is 255 characters.
 - `cartValidity` (optional): A string representing the cart validity in `HH:mm` format.
+- `service_fee_pass_to_customer` (optional): A boolean indicates whether the service fee is passed to the customer (true) or absorbed by the merchant (false).
 
 **Sample Request:**
 ```json
@@ -202,7 +382,8 @@ POST /checkout/cart
   "totalAmount": 150,
   "referenceCode": "tasheel123-ORD98765",
   "cartValidity": "02:00", // Maximum time the user can confirm and pay the downpayment. Minimum is "00:01" (1 minute) and maximum is "48:00" (2 days).
-  "callback_url": "https://merchant.com/webhook"
+  "callback_url": "https://merchant.com/webhook",
+  "service_fee_pass_to_customer": true
 }
 ```
 **Response:**
@@ -230,6 +411,20 @@ POST /checkout/cart
       "The cart validity format is invalid."
     ]
   }
+}
+```
+
+**Expected Error Response (422 - Invalid `service_fee_pass_to_customer` format):**
+```json
+{
+    "status": "error",
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "errors": {
+        "service_fee_pass_to_customer": [
+            "The service fee pass to customer field must be true or false."
+        ]
+    }
 }
 ```
 
