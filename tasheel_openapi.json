@@ -136,6 +136,92 @@
           }
         }
       }
+    },
+    "/assisted/cards": {
+      "get": {
+        "summary": "List the user's supported saved cards",
+        "description": "Returns at most two masked cards. Tokens are never returned; gateway identifies the provider that owns each card.",
+        "parameters": [
+          {
+            "name": "temp-user-access",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cards retrieved",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "code": "CARDS_RETRIEVED",
+                  "data": [
+                    { "id": 38, "last4": "3343", "brand": "VISA", "exp_month": null, "exp_year": null, "is_default": true, "gateway": "OMPay" },
+                    { "id": 37, "last4": "2346", "brand": "MasterCard", "exp_month": 12, "exp_year": 2029, "is_default": false, "gateway": "Paymob" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assisted/cards/{id}/make-default": {
+      "post": {
+        "summary": "Set the user's default saved card",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "temp-user-access", "in": "header", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default card updated without changing its owning provider",
+            "content": {
+              "application/json": {
+                "example": { "status": "success", "code": "DEFAULT_CARD_UPDATED", "message": "Default card updated", "default_card_id": 38 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assisted/checkout/confirm": {
+      "post": {
+        "summary": "Confirm provider-aware assisted checkout",
+        "description": "Routes a saved card through its owning provider. Submit saved_card_id or the legacy-compatible default_card_id.",
+        "parameters": [
+          { "name": "temp-user-access", "in": "header", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["cart_uuid"],
+                "properties": {
+                  "cart_uuid": { "type": "string", "format": "uuid" },
+                  "saved_card_id": { "type": "integer" },
+                  "default_card_id": { "type": "integer", "deprecated": true }
+                },
+                "anyOf": [
+                  { "required": ["saved_card_id"] },
+                  { "required": ["default_card_id"] }
+                ]
+              },
+              "example": { "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2", "saved_card_id": 38 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Payment succeeded or a safe OMPay fallback checkout was initialized" },
+          "202": { "description": "3DS action is required or the provider result is pending reconciliation" },
+          "422": { "description": "Validation error or definitive provider failure" },
+          "503": { "description": "Secondary gateway is unavailable or disabled" }
+        }
+      }
     }
   }
 }

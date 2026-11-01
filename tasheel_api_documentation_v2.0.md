@@ -469,13 +469,22 @@ temp-user-access: <temp_token>
   "code" : "CARDS_RETRIEVED",
   "data": [
     {
-      "id": 3,
-      "token": "tok_125",
-      "last4": "4248",
-      "brand": "Master",
+      "id": 38,
+      "last4": "3343",
+      "brand": "VISA",
       "exp_month": 12,
       "exp_year": 2029,
-      "is_default": true
+      "is_default": true,
+      "gateway": "OMPay"
+    },
+    {
+      "id": 37,
+      "last4": "2346",
+      "brand": "MasterCard",
+      "exp_month": 12,
+      "exp_year": 2029,
+      "is_default": false,
+      "gateway": "Paymob"
     }
   ]
 }
@@ -483,8 +492,9 @@ temp-user-access: <temp_token>
 
 Notes:
 
-* Cards are returned from your DB (`saved_cards` table).
-* Only masked card metadata is returned.
+* The effective default card is returned first, followed by the most recent other supported card. The current implementation returns at most two cards.
+* Only masked metadata for cards owned by a supported provider is returned. Card tokens are never returned.
+* A legacy card with missing or incorrect provider ownership is excluded until corrected.
 ---
 ## Expected Error Responses
 
@@ -550,6 +560,7 @@ Notes:
 
 * Ensures card belongs to the authorized user.
 * Updates default selection via `SavedCardRepository::setDefault()`.
+* The card must belong to a supported provider. Making it the default does not migrate it to the currently primary gateway.
 
 ---
 ## Expected Error Responses
@@ -607,7 +618,7 @@ Notes:
 
 ### 5.3 Assisted Checkout Confirm
 
-This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
+This endpoint **initializes the downpayment payment session** and routes the selected card through its owning provider.
 
 ```
 POST /assisted/checkout/confirm
@@ -629,10 +640,11 @@ temp-user-access: <temp_token>
 }
 ```
 
-**Response**
+**Paymob saved-card success (HTTP 200)**
 
 ```json
 {
+  "success" : true,
   "status" : "success",
   "code" : "PAYMENT_SUCCESS",
   "message": "Payment successful",
@@ -643,9 +655,111 @@ temp-user-access: <temp_token>
     "quotation_id": 118,
     "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
     "transaction_id": "PMB-987654321"
+    "provider": "paymob",
+    "method_code": "125",
+    "ompay_order_id": "PAYMOB_ORDER_ID",
+    "checkout_url": null,
+    "redirect_url": null
   }
 }
 ```
+
+`ompay_order_id` is a legacy field name and may contain a Paymob order identifier.
+
+**OMPay frictionless saved-card success (HTTP 200)**
+
+```json
+{
+  "success": true,
+  "status": "success",
+  "code": "PAYMENT_SUCCESS",
+  "message": "Payment successful",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2",
+    "provider": "ompay",
+    "method_code": "100",
+    "ompay_order_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
+    "transaction_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
+    "checkout_url": null,
+    "redirect_url": null
+  }
+}
+```
+
+**OMPay 3DS authentication required (HTTP 202)**
+
+```json
+{
+  "success": true,
+  "status": "action_required",
+  "code": "PAYMENT_ACTION_REQUIRED",
+  "message": "Additional payment authentication is required.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2",
+    "provider": "ompay",
+    "method_code": "100",
+    "ompay_order_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
+    "transaction_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
+    "checkout_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/8a87bb37-b103-4d5e-af91-5480d38e01d2/3ds",
+
+    "otp_required": true
+  }
+}
+```
+
+Open `checkout_url` in a browser or supported web view. Tasheel does not collect the issuer OTP. The return URL supplied to OMPay must be publicly reachable over HTTPS; `localhost` cannot be opened from the customer's phone.
+
+**Paymob safely falls back to OMPay (HTTP 200)**
+
+```json
+{
+    "success": true,
+    "status": "success",
+    "code": "PAYMENT_FALLBACK_INITIALIZED",
+    "message": "Paymob is unavailable. Continue payment through OMPay.",
+    "data": {
+        "payment_track": "EVVEXOEF2RAP",
+        "amount": 3,
+        "currency": "OMR",
+        "quotation_id": 1726,
+        "cart_uuid": "76d9f940-e8ae-48be-a514-c40540e604de",
+        "provider": "ompay",
+        "method_code": "100",
+        "ompay_order_id": null,
+        "transaction_id": "07295e53-dd34-4356-be46-b672e9420e41",
+        "checkout_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/07295e53-dd34-4356-be46-b672e9420e41/pay-page",
+        "redirect_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/07295e53-dd34-4356-be46-b672e9420e41/pay-page",
+        "fallback_triggered": true,
+        "fallback_from": "paymob",
+        "fallback_to": "ompay",
+        "fallback_reason": "GATEWAY_UNAVAILABLE",
+        "retry_requires_card_details": true
+    }
+}
+```
+
+The fallback creates a fresh OMPay bank-hosted checkout. The Paymob saved-card token is never sent to OMPay.
+
+**Ambiguous provider result (HTTP 202)**
+
+```json
+{
+  "status": "pending",
+  "code": "PAYMENT_PENDING",
+  "message": "Payment status is being verified.",
+  "data": { "payment_track": "YC3ANYBR5GVG" }
+}
+```
+
+Do not retry or switch providers. Poll the documented status endpoint with `payment_track` until Tasheel reconciles the authoritative result.
 ---
 #### Assisted Checkout Confirm Retry & Cooldown 
 
@@ -915,6 +1029,21 @@ If the retry limit is already used, the API returns HTTP 429:
 }
 ```
 
+**503 – Secondary Gateway Unavailable**
+
+```json
+{
+  "status": "error",
+  "code": "SECONDARY_GATEWAY_UNAVAILABLE",
+  "message": "OMPay secondary gateway is unavailable or disabled.",
+  "errors": {
+    "SECONDARY_GATEWAY_UNAVAILABLE": [
+      "Provider initialization error"
+    ]
+  }
+}
+```
+
 ---
 
 **500 – Gateway Configuration Error**
@@ -1050,7 +1179,7 @@ Content-Type: application/json
 
 ## 7. BRS Booking Status
 
-This endpoint allows BRS to report the final booking status after the Tasheel downpayment has been completed. For `NOT_TICKETED` bookings, Tasheel initiates a refund for every successful Paymob downpayment capture associated with the cart's quotation.
+This endpoint allows BRS to report the final booking status after the Tasheel downpayment has been completed. For `NOT_TICKETED` bookings, Tasheel initiates a refund for every successful downpayment capture associated with the cart's quotation, using the provider recorded on each original payment.
 
 ```
 POST /api/checkout/booking-status
@@ -1106,7 +1235,7 @@ The bearer token must authenticate a merchant through the existing `api_branch_s
 ### 7.1 Booking Status and Refund Behaviour
 
 - For `TICKETED`, the booking status is recorded and no refund is created.
-- For `NOT_TICKETED`, Tasheel refunds every successful Paymob downpayment capture for the cart's quotation.
+- For `NOT_TICKETED`, Tasheel refunds every successful downpayment capture for the cart's quotation through its original provider (Paymob or OMPay).
 - The refund includes the captured service fee and does not apply the normal non-refundable-fee calculation.
 - Future unpaid installments are not refunded.
 - An unconfirmed gateway result remains `pending` and is retried through the existing pending-gateway-refund scheduler.
@@ -1290,7 +1419,7 @@ Returned when both identifiers are supplied but the `refCode` does not belong to
 {
   "status": "error",
   "code": "REFUND_INITIATION_FAILED",
-  "message": "No successful Paymob down payment found for this cart",
+  "message": "No successful down payment found for this cart",
   "data": {
     "cartId": "payment-link-uuid",
     "bookingStatus": "NOT_TICKETED"
@@ -1298,7 +1427,7 @@ Returned when both identifiers are supplied but the `refCode` does not belong to
 }
 ```
 
-Returned only for `NOT_TICKETED` when Tasheel cannot find a successful Paymob downpayment capture that can be refunded. A locally successful payment without the Paymob transaction identifier requires reconciliation before retrying.
+Returned only for `NOT_TICKETED` when Tasheel cannot find a successful downpayment capture that can be refunded. A locally successful payment without its provider transaction identifier requires reconciliation before retrying.
 
 ---
 
