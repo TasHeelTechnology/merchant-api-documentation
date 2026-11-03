@@ -525,7 +525,7 @@ Content-Type: application/json
 
 #### Status interpretation for payment.status
 - completed: Downpayment paid successfully
-- pending: Payment initialized but still pending
+- pending: Payment started but not final yet. The bank or payment gateway has not confirmed it, and the customer may already have been charged. Keep the order on hold and call Get Status again every 10 to 15 seconds; each call checks the payment gateway directly. If it is still pending after 5 minutes, wait for the webhook. Do not fulfil, cancel or ask the customer to pay again.
 - cancel: Payment rejected or declined
 - unknown: Treated as cancel
 
@@ -575,6 +575,10 @@ Merchant sets `callback_url` in Create Cart request. Tasheel sends POST:
 ```
 Merchant then calls Get Status API.
 
+- `status: true`: the payment succeeded. `status: false`: the payment failed.
+- The webhook is sent only when the payment is final. No webhook is sent while a payment is still pending.
+- `txnId` is the Tasheel payment reference (`payment_track`); pass it to Get Status as `txnId`.
+
 ---
 
 ## 8. Laravel Middleware Notes
@@ -604,6 +608,8 @@ Below is a screenshot from the Merchant Dashboard for reference:
 ![Integration Settings Screenshot](integration.png)
 
 Ensure that the URL is accessible and properly handles the response from the payment gateway.
+
+Tasheel appends `?txnId=<payment_track>&status=true|false` to this URL. `status=false` can also mean the payment was still being verified when the customer returned, so always confirm the result with Get Status before fulfilling or cancelling the order.
 
 ---
 

@@ -607,7 +607,9 @@ Notes:
 
 ### 5.3 Assisted Checkout Confirm
 
-This endpoint **initializes the downpayment payment session** and returns Paymob Unified Checkout details.
+This endpoint **charges the downpayment** to the customer's selected saved card.
+
+In most cases the card is charged immediately and the response is `PAYMENT_SUCCESS`. The payment can also come back as **not final yet**: the bank is slow to confirm, the bank asks the customer for an extra check (OTP / 3-D Secure), or Tasheel switches to its backup payment gateway. These outcomes are listed under [Confirm outcomes](#confirm-outcomes) below and must be handled, otherwise a customer who has already paid can be shown an error.
 
 ```
 POST /assisted/checkout/confirm
@@ -647,6 +649,104 @@ temp-user-access: <temp_token>
 }
 ```
 ---
+#### Confirm outcomes
+
+| HTTP | `code` | Meaning | What to do |
+|---|---|---|---|
+| 200 | `PAYMENT_SUCCESS` | The card was charged. | Confirm with [Get Status](#6-get-status), then fulfil the order. |
+| 202 | `PAYMENT_PENDING` | The card was accepted but the bank has not confirmed the charge yet (slow bank or gateway timeout). **The money may already have been taken.** | Show "Verifying your payment". Poll [Get Status](#6-get-status) as described in [Handling a pending payment](#61-handling-a-pending-payment). **Do not call Confirm again and do not cancel the order.** |
+| 202 | `PAYMENT_ACTION_REQUIRED` | The card's bank requires the customer to complete an OTP / 3-D Secure check. | Open `data.checkout_url` in a browser or web view. When the check is done, the customer is sent back to your `cart_return_url` with `?txnId=<payment_track>&status=true\|false`. Then confirm with Get Status. |
+| 200 | `PAYMENT_FALLBACK_INITIALIZED` | Tasheel's main payment gateway could not be reached, so a secure payment page was opened on the backup gateway. `data.retry_requires_card_details` is `true`. | Open `data.checkout_url`. The customer enters their card details on that page, is sent back to your `cart_return_url` the same way, and you confirm with Get Status. |
+| 409 | `PAYMENT_IN_PROGRESS` | An earlier payment for this cart is still being verified. | Do not charge again. Poll Get Status with `txnId` = `data.payment_track`. |
+
+**202 – Payment Pending**
+
+```json
+{
+  "success": true,
+  "status": "pending",
+  "code": "PAYMENT_PENDING",
+  "message": "Payment status is being verified. Please check the payment status shortly.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
+    "transaction_id": null,
+    "retry_after_seconds": 10
+  }
+}
+```
+
+`transaction_id` can be `null` while the payment is pending. Store `payment_track`: it is the `txnId` used by Get Status, the webhook and the return URL.
+
+**202 – Additional Authentication Required**
+
+```json
+{
+  "success": true,
+  "status": "action_required",
+  "code": "PAYMENT_ACTION_REQUIRED",
+  "message": "Additional payment authentication is required.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
+    "transaction_id": "a1b2c3d4",
+    "checkout_url": "https://<gateway-secure-page>",
+    "otp_required": true
+  }
+}
+```
+
+**200 – Backup Gateway Page Opened**
+
+```json
+{
+  "status": "success",
+  "code": "PAYMENT_FALLBACK_INITIALIZED",
+  "message": "Paymob is unavailable. Continue payment through OMPay.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
+    "transaction_id": "a1b2c3d4",
+    "checkout_url": "https://<gateway-secure-page>",
+    "fallback_triggered": true,
+    "fallback_from": "paymob",
+    "fallback_to": "ompay",
+    "fallback_reason": "GATEWAY_UNAVAILABLE",
+    "retry_requires_card_details": true
+  }
+}
+```
+
+**409 – Payment Already In Progress**
+
+```json
+{
+  "status": "pending",
+  "code": "PAYMENT_IN_PROGRESS",
+  "message": "A payment for this request is still being verified. Please check its status instead of paying again.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "quotation_id": 118,
+    "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605"
+  },
+  "errors": {
+    "PAYMENT_IN_PROGRESS": [
+      "A previous payment for this request is still pending."
+    ]
+  }
+}
+```
+
+---
 #### Assisted Checkout Confirm Retry & Cooldown 
 
 * Each user + quotation + card combination can attempt **payment only once**.
@@ -659,6 +759,7 @@ temp-user-access: <temp_token>
   user_id + quotation_id + card_id
   ```
 * If a retry attempt is made **before the cooldown expires**, the API returns **HTTP 429**:
+* A **pending** payment is not a failure: it starts no cooldown and uses no retry. While it is being verified (up to 30 minutes), any new Confirm for the same cart returns `409 PAYMENT_IN_PROGRESS`.
 
 ---
 ## Expected Error Responses
@@ -898,6 +999,45 @@ If the retry limit is already used, the API returns HTTP 429:
     }
 }
 ```
+
+When the card was declined by the backup gateway, the response also includes `provider_error`:
+
+```json
+{
+    "success": false,
+    "status": "error",
+    "code": "PAYMENT_FAILED",
+    "message": "Payment failed. Card declined by issuer.",
+    "errors": {
+        "PAYMENT_FAILED": [
+            "Card declined by issuer."
+        ]
+    },
+    "provider_error": {
+        "provider": "ompay",
+        "code": "DECLINED",
+        "message": "Card declined by issuer."
+    }
+}
+```
+---
+
+**503 – Payment Gateways Unavailable**
+
+Both the main and the backup payment gateway are unavailable. No money was taken. Show a friendly error and let the customer try again later.
+
+```json
+{
+    "status": "error",
+    "code": "SECONDARY_GATEWAY_UNAVAILABLE",
+    "message": "OMPay secondary gateway is unavailable or disabled.",
+    "errors": {
+        "SECONDARY_GATEWAY_UNAVAILABLE": [
+            "Payment gateway unavailable"
+        ]
+    }
+}
+```
 ---
 
 **400 – Payment Gateway Not Available**
@@ -1044,9 +1184,30 @@ Content-Type: application/json
 
 #### Status interpretation for payment.status
 - completed: Downpayment paid successfully
-- pending: Payment initialized but still pending
+- pending: Payment started but not final yet. Keep the order on hold and check again (see 6.1). Do not fulfil, cancel or charge again.
 - cancel: Payment rejected or declined
 - unknown: Treated as cancel
+
+### 6.1 Handling a pending payment
+
+A payment can stay `pending` for a short time when the bank or the payment gateway is slow, or when the charge request timed out. The customer's card may already have been charged, so a pending payment must never be treated as a failure.
+
+1. Store `payment_track` from the Confirm response.
+2. Show the customer "Verifying your payment".
+3. Call Get Status with `txnId` = `payment_track` every **10 to 15 seconds** (`data.retry_after_seconds` in the Confirm response). Each call to Get Status checks the payment gateway directly, so most pending payments become `completed` or `cancel` within about **2 minutes**.
+4. If the payment is still `pending` after **5 minutes**, stop polling, keep the order on hold and tell the customer the result will follow. Tasheel keeps checking automatically every few minutes and sends the final result to your `callback_url`.
+5. Act only on a final status: `completed` → fulfil the order, `cancel` → let the customer pay again.
+
+| Do | Do not |
+|---|---|
+| Poll Get Status while the payment is pending | Call Confirm again for the same cart (you get `409 PAYMENT_IN_PROGRESS`) |
+| Keep the order on hold | Cancel the booking or release the seat while the payment is pending |
+| Wait for the webhook to your `callback_url` | Treat `status=false` on the return URL as final while Get Status says `pending` |
+
+### 6.2 Webhook and return URL
+
+* **Webhook:** when a payment becomes final, Tasheel sends `POST` to your `callback_url` with `{"txnId": "<payment_track>", "status": true}` for a successful payment, or `"status": false` for a failed one. No webhook is sent while a payment is still pending. Reply `200` quickly, then call Get Status to confirm.
+* **Return URL:** after a gateway page (`PAYMENT_ACTION_REQUIRED` or `PAYMENT_FALLBACK_INITIALIZED`), the customer is sent to your `cart_return_url` with `?txnId=<payment_track>&status=true|false`. `status=false` can also mean the payment was still being verified when the customer returned. Always confirm with Get Status.
 
 ## 7. BRS Booking Status
 
