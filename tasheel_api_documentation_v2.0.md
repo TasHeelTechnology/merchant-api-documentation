@@ -1048,7 +1048,281 @@ Content-Type: application/json
 - cancel: Payment rejected or declined
 - unknown: Treated as cancel
 
-## 7. Security Considerations
+## 7. BRS Booking Status
+
+This endpoint allows BRS to report the final booking status after the Tasheel downpayment has been completed. For `NOT_TICKETED` bookings, Tasheel initiates a refund for every successful Paymob downpayment capture associated with the cart's quotation.
+
+```
+POST /api/checkout/booking-status
+```
+
+**Headers:**
+
+```http
+Authorization: Bearer <BRS access token>
+Content-Type: application/json
+Accept: application/json
+```
+
+The bearer token must authenticate a merchant through the existing `api_branch_staff` guard. The authenticated merchant must own the specified cart.
+
+**Body Parameters:**
+
+- `cartId` (optional): Payment-link UUID. Supply `cartId` or `refCode`; `cartId` is preferred.
+- `refCode` (optional): Merchant reference code associated with the cart. If both identifiers are supplied, they must identify the same cart.
+- `status` (required): Must be either `TICKETED` or `NOT_TICKETED`.
+- `bookingReference` (optional): Booking reference or PNR supplied by BRS.
+- `reason` (optional): Reason associated with the booking result.
+- `timestamp` (optional): ISO-8601-compatible date/time. UTC (`Z`) is preferred.
+
+**Sample Request:**
+
+```json
+{
+  "cartId": "payment-link-uuid",
+  "refCode": "optional-reference-that-must-match-the-cart",
+  "status": "TICKETED",
+  "bookingReference": "PNR123456",
+  "timestamp": "2026-10-29T10:30:00Z"
+}
+```
+
+**Response (example):**
+
+```json
+{
+  "status": "success",
+  "code": "BOOKING_STATUS_RECORDED",
+  "message": "Booking status recorded successfully",
+  "data": {
+    "cartId": "payment-link-uuid",
+    "bookingStatus": "TICKETED",
+    "refund": null,
+    "duplicate": false
+  }
+}
+```
+
+### 7.1 Booking Status and Refund Behaviour
+
+- For `TICKETED`, the booking status is recorded and no refund is created.
+- For `NOT_TICKETED`, Tasheel refunds every successful Paymob downpayment capture for the cart's quotation.
+- The refund includes the captured service fee and does not apply the normal non-refundable-fee calculation.
+- Future unpaid installments are not refunded.
+- An unconfirmed gateway result remains `pending` and is retried through the existing pending-gateway-refund scheduler.
+- Repeated API requests resume the same refund request rather than creating another one.
+
+A successful `NOT_TICKETED` response includes a `refund` object:
+
+```json
+{
+    "status": "success",
+    "code": "BOOKING_STATUS_RECORDED",
+    "message": "Booking failure recorded and refund initiated",
+    "data": {
+        "cartId": "3db6af17-ef2c-4309-a229-0f6a4cc56c20",
+        "bookingStatus": "NOT_TICKETED",
+        "refund": {
+            "refundRequestId": 172,
+            "amount": "13.000",
+            "currency": "OMR",
+            "status": "completed"
+        },
+        "duplicate": false
+    }
+}
+```
+
+The refund amount is returned as a three-decimal OMR value. The refund status is either `pending` or `completed` and reflects the confirmed gateway result; a pending refund is never reported as completed.
+
+### 7.2 Idempotency and Conflicts
+
+- An identical retry returns HTTP `200` with code `BOOKING_STATUS_ALREADY_PROCESSED` and `duplicate: true`.
+- If a terminal booking status has already been recorded, a request with the opposite status returns HTTP `409` with code `BOOKING_STATUS_CONFLICT`.
+- Ordinary BRS requests cannot reverse a terminal booking status.
+
+```json
+{
+    "status": "success",
+    "code": "BOOKING_STATUS_ALREADY_PROCESSED",
+    "message": "This booking status has already been processed",
+    "data": {
+        "cartId": "3db6af17-ef2c-4309-a229-0f6a4cc56c20",
+        "bookingStatus": "NOT_TICKETED",
+        "refund": {
+            "refundRequestId": 172,
+            "amount": "13.000",
+            "currency": "OMR",
+            "status": "completed"
+        },
+        "duplicate": true
+    }
+}
+```
+
+### 7.3 Expected Error Responses
+
+**401 – Unauthenticated**
+
+```json
+{
+  "status": "error",
+  "code": "UNAUTHENTICATED",
+  "message": "Invalid or missing access token"
+}
+```
+
+Returned when the bearer token is missing, expired, invalid, or cannot authenticate through the `api_branch_staff` guard.
+
+---
+
+**403 – Unauthorized**
+
+```json
+{
+  "status": "error",
+  "code": "UNAUTHORIZED",
+  "message": "Merchant not authorized for this cart"
+}
+```
+
+Returned when the cart belongs to a different merchant from the merchant authenticated by the bearer token.
+
+---
+
+**404 – Cart Not Found**
+
+```json
+{
+  "status": "error",
+  "code": "CART_NOT_FOUND",
+  "message": "The specified cart could not be found"
+}
+```
+
+Returned when no active payment link matches the supplied `cartId` or `refCode`, or when the cart has been deleted.
+
+---
+
+**409 – Downpayment Not Successful**
+
+```json
+{
+  "status": "error",
+  "code": "DOWN_PAYMENT_NOT_SUCCESSFUL",
+  "message": "The cart has no successful down payment"
+}
+```
+
+Returned when Tasheel has no successful quotation or downpayment payment for the cart. Confirm the payment status and retry only after it has successfully settled.
+
+---
+
+**409 – Booking Status Conflict**
+
+```json
+{
+  "status": "error",
+  "code": "BOOKING_STATUS_CONFLICT",
+  "message": "The booking has already been processed with a different status"
+}
+```
+
+Returned when the cart already has a terminal booking status and BRS sends the opposite status.
+
+---
+
+**422 – Invalid Booking Status**
+
+```json
+{
+  "status": "error",
+  "code": "INVALID_BOOKING_STATUS",
+  "message": "Status must be TICKETED or NOT_TICKETED",
+  "errors": {
+    "status": [
+      "The selected status is invalid."
+    ]
+  }
+}
+```
+
+Returned when `status` is missing or is not exactly `TICKETED` or `NOT_TICKETED`. It can also occur when the JSON body is malformed or sent with an incorrect content type.
+
+---
+
+**422 – Validation Failed**
+
+```json
+{
+  "status": "error",
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": {
+    "cartId": [
+      "The cart id field is required when ref code is not present."
+    ]
+  }
+}
+```
+
+Returned when required identifiers are missing, a value has the wrong type, a field exceeds its maximum length, or `timestamp` is not a valid date.
+
+---
+
+**422 – Cart Identifier Mismatch**
+
+```json
+{
+  "status": "error",
+  "code": "CART_IDENTIFIER_MISMATCH",
+  "message": "cartId and refCode do not identify the same cart"
+}
+```
+
+Returned when both identifiers are supplied but the `refCode` does not belong to the cart selected by `cartId`.
+
+---
+
+**422 – Refund Initiation Failed**
+
+```json
+{
+  "status": "error",
+  "code": "REFUND_INITIATION_FAILED",
+  "message": "No successful Paymob down payment found for this cart",
+  "data": {
+    "cartId": "payment-link-uuid",
+    "bookingStatus": "NOT_TICKETED"
+  }
+}
+```
+
+Returned only for `NOT_TICKETED` when Tasheel cannot find a successful Paymob downpayment capture that can be refunded. A locally successful payment without the Paymob transaction identifier requires reconciliation before retrying.
+
+---
+
+**500 – Booking Status Processing Failed**
+
+```json
+{
+  "status": "error",
+  "code": "BOOKING_STATUS_PROCESSING_FAILED",
+  "message": "Booking status could not be processed"
+}
+```
+
+Returned for an unexpected database or application failure while resolving, locking, or recording the booking status. BRS may retry the same request because identical requests are idempotent.
+
+### 7.4 Framework-Level Responses
+
+- HTTP `429 Too Many Requests` is returned when the checkout endpoint rate limit is exceeded. BRS should retry with backoff.
+- A maintenance response may be returned while Tasheel maintenance middleware is active.
+- These responses may use the standard Laravel/Tasheel middleware format rather than the endpoint-specific JSON structures above.
+
+---
+
+## 8. Security Considerations
 
 
 * OTP explicitly confirms user consent before any card/payment actions.
