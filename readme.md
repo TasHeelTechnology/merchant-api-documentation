@@ -16,6 +16,9 @@ This document focuses on:
 - Handling user authentication and authorization flows using OTP-based verification.
 - Managing secure payment processes, including listing saved cards, setting defaults, and confirming payments.
 
+### 3. [PDF versions](./pdf-versions/README.md)
+Printable merchant guides, one file per change, named with the date they were generated (for example `Tasheel_Assisted_Checkout_Integration_Guide_v2.1_2026-11-03.pdf`).
+
 ---
 
 For any questions or support, please contact the Tasheel technical team.
