@@ -7,6 +7,22 @@ Tasheel BNPL API enables merchants to create invoices for customers who want to 
 - Authenticate to get JWT token.
 - Check payment status after downpayment.
 
+### 1.1 Payment identifiers
+
+Tasheel exposes two payment identifiers. They are not interchangeable:
+
+| Field | Format | Purpose |
+|---|---|---|
+| `txnId` / `txn_id` | Existing Tasheel payment reference | Identifies `payments.trx`. This value is unchanged. |
+| `transaction_id` | Nullable string containing a numeric value of up to 9 digits | Identifies the gateway transaction through a common Tasheel transaction ID. |
+
+- For Paymob, Tasheel preserves the existing Paymob transaction ID when it is numeric, no more than 9 digits, and available. If a Paymob ID is longer than 9 digits or is already in use, Tasheel assigns a different numeric ID.
+- For OMPay, Tasheel maps the gateway UUID to a numeric Tasheel transaction ID. The raw OMPay UUID is never returned to merchants.
+- `transaction_id` can be `null` when no Tasheel transaction ID is available, for example before the gateway has returned a transaction.
+- No request fields were added, and no response keys were removed or renamed. `payment.transaction_id` is added to the status response.
+- Requests that accept `txnId` can use either the existing Tasheel payment reference or the numeric Tasheel transaction ID. Tasheel checks the existing payment reference first.
+- Historical payments also have a `transaction_id`. Card-verification charges do not.
+
 ---
 
 ## 2. Authentication & Authorization
@@ -443,7 +459,10 @@ Content-Type: application/json
 **Body Parameters:**
 - `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
 - `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
-- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+- `txnId` (optional): Use if `refCode` or `cartId` is unavailable. Accepts either:
+  - the Tasheel payment reference sent as `txnId` in the webhook to your `callback_url` and in the customer redirect, e.g. `RPBK3THJQ7RB`, or
+  - the numeric Tasheel `transaction_id` (1–9 digits), e.g. `387654321`.
+  Tasheel first looks for an exact payment reference match, then for a `transaction_id`. If neither matches, the API returns HTTP 422 with `errors.txnId`.
 
 **Sample Request:**
 ```json
@@ -463,10 +482,11 @@ Content-Type: application/json
     "uuid": "UUID123",
     "referenceCode": "tasheel123-ORD98765",
     "payment": {
-      "txn_id": "TXN123456",
+      "txn_id": "RPBK3THJQ7RB",
+      "transaction_id": "387654321",
       "created_at": "2025-11-25T10:30:00Z",
       "try": 1,
-      "status": "completed", // Status options: 1 => "completed", 2 => "pending", 3 => "cancel", default => "unknown".
+      "status": "completed",
       "note": "Downpayment received",
       "amount": 50.00,
       "final_amount": 50.00,
@@ -529,6 +549,11 @@ Content-Type: application/json
 - cancel: Payment rejected or declined
 - unknown: Treated as cancel
 
+#### Payment identifiers in the status response
+
+- `payment.txn_id`: Tasheel payment reference (alphanumeric). Same value as `txnId` in webhooks and redirects.
+- `payment.transaction_id`: Tasheel transaction ID. Under normal operation, this is a numeric string from `"1"` to `"999999999"`, regardless of whether Paymob or OMPay processed the payment. For Paymob, it is the Paymob transaction number whenever that number can be preserved. For OMPay, it is a Tasheel-issued number; the OMPay UUID is never returned. The value can be `null` when no Tasheel transaction ID is available. Treat this field as a nullable string.
+
 ### 6.4 Delete Cart
 ```
 DELETE /checkout/cart
@@ -543,7 +568,7 @@ Content-Type: application/json
 **Body Parameters:**
 - `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
 - `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
-- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+- `txnId` (optional): Use if `refCode` or `cartId` is unavailable. Accepts the Tasheel payment reference (`txnId` from the webhook or redirect, e.g. `RPBK3THJQ7RB`) or the numeric Tasheel `transaction_id` (1–9 digits). The payment reference is matched first. If neither matches, the API returns HTTP 422 with `errors.txnId`.
 
 **Sample Request:**
 ```json
@@ -573,7 +598,9 @@ Merchant sets `callback_url` in Create Cart request. Tasheel sends POST:
   "status": true
 }
 ```
-Merchant then calls Get Status API.
+`txnId` is the Tasheel payment reference (alphanumeric). It is the same value for every payment gateway and is **not** the gateway transaction ID. The same `txnId` is appended to the customer redirect URL (`?txnId=...&status=...`).
+
+Merchant then calls Get Status API. The status response returns both `payment.txn_id` (this reference) and `payment.transaction_id` (the Tasheel transaction ID).
 
 ---
 

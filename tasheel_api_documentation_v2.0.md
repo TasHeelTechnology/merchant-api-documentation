@@ -12,6 +12,28 @@ This flow is explicitly authorized by the user through **OTP-based verification*
 
 ---
 
+### 1.1 Transaction Identifiers
+
+Tasheel returns two different identifiers for a payment. They are not interchangeable.
+
+| Field | Where it appears | Format | Meaning |
+|---|---|---|---|
+| `payment_track` / `txnId` / `txn_id` | Checkout responses (`payment_track`), webhooks and redirects (`txnId`), status responses (`payment.txn_id`) | Alphanumeric, e.g. `RPBK3THJQ7RB` | Tasheel payment reference. Unchanged. |
+| `transaction_id` | Checkout confirm responses, status responses (`payment.transaction_id`) | Nullable string containing a numeric value of up to 9 digits, e.g. `"104857321"` | Tasheel transaction ID for the gateway transaction. |
+
+Rules for `transaction_id`:
+
+* Under normal operation, it is a numeric string from `"1"` to `"999999999"`, regardless of which payment gateway processed the payment. Store it as a string.
+* For Paymob payments, the existing Paymob transaction ID is preserved when it is numeric, no more than 9 digits, and available. If a Paymob ID is longer than 9 digits or is already in use, Tasheel assigns a different numeric ID.
+* For OMPay payments it is a Tasheel-issued number. The OMPay gateway's own identifier (a UUID) is never returned.
+* It can be `null` when no Tasheel transaction ID is available, for example before the gateway has returned a transaction.
+* `transaction_id` is not the same value as `payment_track` / `txnId`.
+* No request fields were added, and no response keys were removed or renamed. `payment.transaction_id` is added to the status response.
+* Requests that accept `txnId` can use either the existing Tasheel payment reference or the numeric Tasheel transaction ID. Tasheel checks the existing payment reference first.
+* Historical payments also have a `transaction_id`. Card-verification charges do not.
+
+---
+
 ## 2. Authentication & Authorization
 
 Assisted checkout uses **OTP-based temporary authorization** initiated by the merchant and approved by the user.
@@ -654,17 +676,12 @@ temp-user-access: <temp_token>
     "currency": "OMR",
     "quotation_id": 118,
     "cart_uuid": "d97843bb-8589-4c89-8b63-9a6b12232605",
-    "transaction_id": "PMB-987654321"
-    "provider": "paymob",
-    "method_code": "125",
-    "ompay_order_id": "PAYMOB_ORDER_ID",
-    "checkout_url": null,
-    "redirect_url": null
+    "transaction_id": "387654321"
   }
 }
 ```
 
-`ompay_order_id` is a legacy field name and may contain a Paymob order identifier.
+`transaction_id` is the Tasheel transaction ID (see [1.1 Transaction Identifiers](#11-transaction-identifiers)). For Paymob, it is the Paymob transaction number whenever that number can be preserved.
 
 **OMPay frictionless saved-card success (HTTP 200)**
 
@@ -680,15 +697,12 @@ temp-user-access: <temp_token>
     "currency": "OMR",
     "quotation_id": 118,
     "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2",
-    "provider": "ompay",
-    "method_code": "100",
-    "ompay_order_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
-    "transaction_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
-    "checkout_url": null,
-    "redirect_url": null
+    "transaction_id": "1042"
   }
 }
 ```
+
+For OMPay, `transaction_id` is a Tasheel-issued numeric ID. The OMPay UUID is never returned.
 
 **OMPay 3DS authentication required (HTTP 202)**
 
@@ -704,24 +718,19 @@ temp-user-access: <temp_token>
     "currency": "OMR",
     "quotation_id": 118,
     "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2",
-    "provider": "ompay",
-    "method_code": "100",
-    "ompay_order_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
-    "transaction_id": "8a87bb37-b103-4d5e-af91-5480d38e01d2",
+    "transaction_id": "1042",
     "checkout_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/8a87bb37-b103-4d5e-af91-5480d38e01d2/3ds",
-
     "otp_required": true
   }
 }
 ```
 
-Open `checkout_url` in a browser or supported web view. Tasheel does not collect the issuer OTP. The return URL supplied to OMPay must be publicly reachable over HTTPS; `localhost` cannot be opened from the customer's phone.
+Treat `checkout_url` as an opaque URL. Do not parse identifiers out of it; use `transaction_id` and `payment_track`. Open `checkout_url` in a browser or supported web view. Tasheel does not collect the issuer OTP. The return URL supplied to OMPay must be publicly reachable over HTTPS; `localhost` cannot be opened from the customer's phone.
 
 **Paymob safely falls back to OMPay (HTTP 200)**
 
 ```json
 {
-    "success": true,
     "status": "success",
     "code": "PAYMENT_FALLBACK_INITIALIZED",
     "message": "Paymob is unavailable. Continue payment through OMPay.",
@@ -731,12 +740,8 @@ Open `checkout_url` in a browser or supported web view. Tasheel does not collect
         "currency": "OMR",
         "quotation_id": 1726,
         "cart_uuid": "76d9f940-e8ae-48be-a514-c40540e604de",
-        "provider": "ompay",
-        "method_code": "100",
-        "ompay_order_id": null,
-        "transaction_id": "07295e53-dd34-4356-be46-b672e9420e41",
+        "transaction_id": "1043",
         "checkout_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/07295e53-dd34-4356-be46-b672e9420e41/pay-page",
-        "redirect_url": "https://api.sandbox.truepay.ompay.om/api/v1/transactions/07295e53-dd34-4356-be46-b672e9420e41/pay-page",
         "fallback_triggered": true,
         "fallback_from": "paymob",
         "fallback_to": "ompay",
@@ -752,12 +757,23 @@ The fallback creates a fresh OMPay bank-hosted checkout. The Paymob saved-card t
 
 ```json
 {
+  "success": true,
   "status": "pending",
   "code": "PAYMENT_PENDING",
-  "message": "Payment status is being verified.",
-  "data": { "payment_track": "YC3ANYBR5GVG" }
+  "message": "Payment status is being verified. Please check the payment status shortly.",
+  "data": {
+    "payment_track": "YC3ANYBR5GVG",
+    "amount": 75,
+    "currency": "OMR",
+    "quotation_id": 118,
+    "cart_uuid": "728ef50f-6d14-42df-83da-7b5bba574af2",
+    "transaction_id": "387654321",
+    "retry_after_seconds": 10
+  }
 }
 ```
+
+`transaction_id` can be `null` here if the gateway has not returned a transaction yet.
 
 Do not retry or switch providers. Poll the documented status endpoint with `payment_track` until Tasheel reconciles the authoritative result.
 ---
@@ -1093,7 +1109,12 @@ Content-Type: application/json
 **Body Parameters:**
 - `refCode` (optional): Merchant reference code used for idempotency. It equals `merchantId` concatenated with the merchant’s order number (e.g., `tasheel123-ORD98765`). Must exist in `tasheel_payment_links` table.
 - `cartId` (optional): The cart UUID returned from Create Cart (e.g., `cart_id`). Must exist in `tasheel_payment_links` table.
-- `txnId` (optional): Transaction ID provided by Tasheel in the webhook request to your `callback_url` when Tasheel calls the merchant’s callback. Use if `refCode` or `cartId` is unavailable. Must exist in `payments` table.
+- `txnId` (optional): Use if `refCode` or `cartId` is unavailable. Accepts either:
+
+  - the Tasheel payment reference (`payment_track` from checkout, or `txnId` from the webhook/redirect), e.g. `RPBK3THJQ7RB`, or
+  - the numeric Tasheel `transaction_id` (1–9 digits), e.g. `387654321`.
+
+  Tasheel first looks for an exact payment reference match, then for a `transaction_id`. If neither matches, the API returns HTTP 422 with `errors.txnId`.
 
 **Sample Request:**
 ```json
@@ -1111,10 +1132,11 @@ Content-Type: application/json
     "uuid": "UUID123",
     "referenceCode": "tasheel123-ORD98765",
     "payment": {
-      "txn_id": "TXN123456",
+      "txn_id": "RPBK3THJQ7RB",
+      "transaction_id": "387654321",
       "created_at": "2025-11-25T10:30:00Z",
       "try": 1,
-      "status": "completed", // Status options: 1 => "completed", 2 => "pending", 3 => "cancel", default => "unknown".
+      "status": "completed",
       "note": "Downpayment received",
       "amount": 50.00,
       "final_amount": 50.00,
@@ -1176,6 +1198,11 @@ Content-Type: application/json
 - pending: Payment initialized but still pending
 - cancel: Payment rejected or declined
 - unknown: Treated as cancel
+
+#### Payment identifiers in the status response
+
+- `payment.txn_id`: Tasheel payment reference (alphanumeric). Same value as `payment_track` / `txnId`.
+- `payment.transaction_id`: Tasheel transaction ID. It is normally a numeric string from `"1"` to `"999999999"`; it can be `null` when no Tasheel transaction ID is available. See [1.1 Transaction Identifiers](#11-transaction-identifiers).
 
 ## 7. BRS Booking Status
 
